@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block navbar %}
+    {% include "navbar.html" %}
+{% endblock %}
+{% block title %}Espace Serveur{% endblock %}
+{% block content %}
+<div class="container mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6 text-gray-800">Bienvenue, {{ request.user.username }} !</h1>
+
+    <!-- Tables assignées -->
+    <section class="mb-8">
+        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Tables assignées</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow">
+                <thead>
+                    <tr class="bg-gray-100 text-left">
+                        <th class="py-2 px-4 border-b">Numéro de table</th>
+                        <th class="py-2 px-4 border-b">Nombre de places</th>
+                        <th class="py-2 px-4 border-b">Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for table in tables %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-2 px-4 border-b">{{ table.numero_table }}</td>
+                        <td class="py-2 px-4 border-b">{{ table.nombre_places }}</td>
+                        <td class="py-2 px-4 border-b">
+                            {% if table.is_occupied %}
+                                <span class="text-red-600 font-semibold">Occupée</span>
+                            {% else %}
+                                <span class="text-green-600 font-semibold">Libre</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="py-4 px-4 text-center text-gray-500">Aucune table assignée pour le moment.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Plats disponibles -->
+    <section>
+        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Plats disponibles</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for plat in plats %}
+            <div class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition">
+                <h3 class="text-lg font-bold mb-2">{{ plat.nom }}</h3>
+                <p class="text-gray-600">Prix : {{ plat.prix }} €</p>
+            </div>
+            {% empty %}
+            <p class="text-gray-500 col-span-full">Aucun plat actif pour le moment.</p>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

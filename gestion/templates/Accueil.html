@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block navbar %}
+    {% include "navbar.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <div class="bg-gray-800 rounded-xl shadow-md p-10">
+        <h1 class="text-4xl font-extrabold text-yellow-400 mb-4">
+            Bienvenue {{ request.user.identifiant }}
+        </h1>
+        <p class="text-gray-300 text-lg">
+            Vous êtes connecté au système de gestion du <span class="font-semibold text-gray-100">Restaurant Élégance</span>.
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="bg-gray-700 border border-gray-600 rounded-lg p-6 hover:bg-gray-600 transition">
+            <h2 class="text-xl font-semibold mb-2 text-yellow-400">Navigation</h2>
+            <p class="text-gray-300 text-sm">
+                Accédez à votre espace via la barre de navigation selon votre rôle.
+            </p>
+        </div>
+
+        <div class="bg-gray-700 border border-gray-600 rounded-lg p-6 hover:bg-gray-600 transition">
+            <h2 class="text-xl font-semibold mb-2 text-yellow-400">Rôles</h2>
+            <p class="text-gray-300 text-sm">
+                Chaque utilisateur dispose de permissions spécifiques.
+            </p>
+        </div>
+
+        <div class="bg-gray-700 border border-gray-600 rounded-lg p-6 hover:bg-gray-600 transition">
+            <h2 class="text-xl font-semibold mb-2 text-yellow-400">Administration</h2>
+            <p class="text-gray-300 text-sm">
+                Les administrateurs ont accès à l’ensemble des sections.
+            </p>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+
+

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Connexion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-black min-h-screen flex items-center justify-center">
+
+<div class="bg-zinc-900 p-8 rounded-xl shadow-lg w-full max-w-md">
+    <h2 class="text-white text-2xl font-bold text-center mb-6">
+        Connexion sécurisée
+    </h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p class="text-red-500 text-sm text-center mb-3">{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+
+  <form method="post" action="{% url 'login' %}" class="space-y-4">
+    {% csrf_token %}
+
+    <!-- Identifiant -->
+    <div>
+        <label for="identifiant" class="block text-lg font-semibold mb-1 text-white">
+            Identifiant
+        </label>
+        <input type="text" id="identifiant" name="identifiant" required
+               placeholder="Entrez votre identifiant"
+               class="w-full px-4 py-3 rounded bg-zinc-800 text-white border border-zinc-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+               value="{{ identifiant|default:'' }}">
+    </div>
+
+    <!-- Mot de passe -->
+    <div>
+        <label for="password" class="block text-lg font-semibold mb-1 text-white">
+            Clé d'accès
+        </label>
+        <input type="password" id="password" name="password" required
+               placeholder="Entrez votre mot de passe"
+               class="w-full px-4 py-3 rounded bg-zinc-800 text-white border border-zinc-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+    </div>
+
+    <!-- Bouton -->
+    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded font-semibold">
+     Se connecter
+   </button>
+
+    <!-- Erreur -->
+    {% if error %}
+        <p class="text-red-500 text-center font-medium mt-2">{{ error }}</p>
+    {% endif %}
+</form>
+
+
+
+    <p class="text-xs text-zinc-500 text-center mt-4">
+        Accès réservé • Système sécurisé
+    </p>
+</div>
+
+</body>
+</html>
+
+
+

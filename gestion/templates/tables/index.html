@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block navbar %}
+    {% include "navbar.html" %}
+{% endblock %}
+{% block title %}Tables du restaurant{% endblock %}
+
+{% block content %}
+
+<h1 class="text-3xl font-bold mb-6">Gestion des tables</h1>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+
+    {% for table in tables %}
+        <div class="bg-white shadow rounded-lg p-5 border
+            {% if table.is_occupied %}
+                border-red-500
+            {% else %}
+                border-green-500
+            {% endif %}
+        ">
+            <h2 class="text-xl font-semibold mb-2">
+                Table {{ table.numero_table }}
+            </h2>
+
+            <p class="text-gray-600 mb-1">
+                Places : {{ table.nombre_places }}
+            </p>
+
+            <p class="font-semibold mb-3">
+                Statut :
+                {% if table.is_occupied %}
+                    <span class="text-red-600">Occupée</span>
+                {% else %}
+                    <span class="text-green-600">Libre</span>
+                {% endif %}
+            </p>
+
+            {% if table.utilisateur %}
+                <p class="text-sm text-gray-500">
+                    Tablette : {{ table.utilisateur.identifiant }}
+                </p>
+            {% else %}
+                <p class="text-sm text-gray-400 italic">
+                    Aucune tablette assignée
+                </p>
+            {% endif %}
+        </div>
+    {% empty %}
+        <p>Aucune table enregistrée.</p>
+    {% endfor %}
+
+</div>
+
+{% endblock %}

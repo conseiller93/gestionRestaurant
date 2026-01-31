@@ -1,0 +1,80 @@
+<aside class="hidden md:flex w-64 bg-gray-800 text-gray-100 flex-col shadow-xl">
+
+    <!-- LOGO -->
+    <div class="px-6 py-6 text-2xl font-bold text-yellow-400 border-b border-gray-700">
+        🍽️ Restaurant Élégance
+    </div>
+
+    <!-- NAVIGATION -->
+    <nav class="flex-1 px-4 py-6 space-y-2">
+
+        {% if request.user.is_authenticated %}
+
+            <a href="{% url 'Accueil' %}"
+               class="block px-4 py-2 rounded-lg hover:bg-gray-700 transition">
+                🏠 Accueil
+            </a>
+
+            {% if request.user.is_superuser %}
+                <a href="{% url 'admin_page' %}" class="block px-4 py-2 rounded-lg hover:bg-gray-700">
+                    👑 Administration
+                </a>
+                <a href="{% url 'serveur_index' %}" class="block px-4 py-2 rounded-lg hover:bg-gray-700">
+                    🍽️ Serveur
+                </a>
+                <a href="{% url 'table_index' %}" class="flex items-center px-4 py-2 rounded-lg hover:bg-gray-700">
+                        🪑 <span class="ml-2">Tables</span>
+                    </a>
+                <a href="{% url 'tablette_index' %}" class="block px-4 py-2 rounded-lg hover:bg-gray-700">
+                    📱 Tablette
+                </a>
+                <a href="{% url 'cuisinier_index' %}" class="flex items-center px-4 py-2 rounded-lg hover:bg-gray-700">
+                        🍲 <span class="ml-2">Menu</span>
+                    </a>
+
+                <a href="{% url 'commande_index' %}" class="block px-4 py-2 rounded-lg hover:bg-gray-700">
+                        🛒 Commande
+                    </a>
+                <a href="{% url 'comptable_index' %}" class="block px-4 py-2 rounded-lg hover:bg-gray-700">
+                        💰 Comptabilité
+                    </a>
+
+            {% else %}
+
+                {% if request.user.role == 'serveur' %}
+                    <a href="{% url 'serveur_index' %}" class="block px-4 py-2 rounded-lg hover:bg-gray-700">
+                        🍽️ Serveur
+                    </a>
+
+                {% elif request.user.role == 'cuisinier' %}
+                    <a href="{% url 'cuisinier_index' %}" class="block px-4 py-2 rounded-lg hover:bg-gray-700">
+                        👨‍🍳 Cuisine
+                    </a>
+
+                {% elif request.user.role == 'comptable' %}
+                    <a href="{% url 'comptable_index' %}" class="block px-4 py-2 rounded-lg hover:bg-gray-700">
+                        💰 Comptabilité
+                    </a>
+
+                {% elif request.user.role == 'tablette' %}
+                <a href="{% url 'tablette_index' %}" class="block px-4 py-2 rounded-lg hover:bg-gray-700">
+                    📱 Tablette
+                </a>
+            {% endif %}
+
+            {% endif %}
+        {% endif %}
+
+    </nav>
+
+    <!-- DÉCONNEXION -->
+    {% if request.user.is_authenticated %}
+    <div class="px-6 py-4 border-t border-gray-700">
+        <a href="{% url 'logout' %}"
+           class="block text-center bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition">
+            🚪 Déconnexion
+        </a>
+    </div>
+    {% endif %}
+</aside>
+

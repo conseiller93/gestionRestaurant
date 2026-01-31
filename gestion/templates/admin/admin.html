@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+
+{% block navbar %}
+    {% include "navbar.html" %}
+{% endblock %}
+
+{% block title %}Administration{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-6">Tableau de bord Administrateur</h1>
+
+<!-- ================================= GRID PRINCIPAL ================================= -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    <!-- ===== GESTION DES UTILISATEURS ===== -->
+    <div class="bg-black shadow rounded p-7">
+        <h2 class="text-xl font-semibold mb-2">Utilisateurs</h2>
+        <p class="text-gray-600 mb-4">Gérer les comptes utilisateurs</p>
+        {% if user.is_authenticated and user.role == 'admin' %}
+        <button onclick="openModal('modalGerer')" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            Gérer
+        </button>
+        {% endif %}
+    </div>
+
+    <!-- ===== GESTION DES TABLES / TABLETTES ===== -->
+    <div class="bg-black shadow rounded p-7">
+        <h2 class="text-xl font-semibold mb-2">Tables / Tablettes</h2>
+        <p class="text-gray-600 mb-4">Gérer les tables et leurs tablettes</p>
+        <button onclick="openModal('modalGererTables')" 
+                class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+            Gérer
+        </button>
+    </div>
+
+    <!-- ===== GESTION DU MENU ===== -->
+    <div class="bg-black shadow rounded p-7">
+        <h2 class="text-xl font-semibold mb-2">Menu</h2>
+        <p class="text-gray-600 mb-4">Gestion des plats</p>
+        <a href="{% url 'cuisinier_index' %}" 
+           class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+            Menu
+        </a>
+    </div>
+
+    <!-- ===== COMMANDES ===== -->
+    <div class="bg-black shadow rounded p-7">
+        <h2 class="text-xl font-semibold mb-2">Commandes</h2>
+        <p class="text-gray-600 mb-4">Suivre les commandes</p>
+        <button onclick="openModal('modalCommandes')" 
+                class="bg-yellow-500 text-black px-4 py-2 rounded hover:bg-yellow-600">
+            Consulter
+        </button>
+    </div>
+
+    <!-- ===== CAISSE ===== -->
+    <div class="bg-black shadow rounded p-7">
+        <h2 class="text-xl font-semibold mb-2">Caisse</h2>
+        <p class="text-gray-600 mb-4">Voir le solde et les dépenses</p>
+        <a href="{% url 'comptable_index' %}" 
+           class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+            Comptabilité
+        </a>
+    </div>
+
+</div> <!-- /grid -->
+
+{% if user.is_authenticated and user.role == 'admin' %}
+
+<!-- ================= MODAL GERER UTILISATEURS ================= -->
+<div id="modalGerer" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+  <div class="bg-black rounded-lg p-6 w-3/4 max-h-[80vh] overflow-y-auto relative">
+    <button onclick="closeModal('modalGerer')" class="absolute top-2 right-2 text-red-600 text-2xl">&times;</button>
+
+    <h2 class="text-2xl font-bold mb-4">Gérer les comptes utilisateurs</h2>
+
+    <!-- TABLE DES UTILISATEURS -->
+    <table class="w-full table-auto border-collapse mb-4">
+      <thead>
+        <tr>
+          <th class="border px-2 py-1">ID</th>
+          <th class="border px-2 py-1">Identifiant</th>
+          <th class="border px-2 py-1">Email</th>
+          <th class="border px-2 py-1">Rôle</th>
+          <th class="border px-2 py-1">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in utilisateurs %}
+        <tr>
+          <td class="border px-2 py-1">{{ u.id }}</td>
+          <td class="border px-2 py-1">{{ u.identifiant }}</td>
+          <td class="border px-2 py-1">{{ u.email }}</td>
+
+          <!-- Formulaire pour modifier un utilisateur -->
+          <td class="border px-2 py-1">
+           <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="user_id" value="{{ u.id }}">
+            <input type="text" name="username" value="{{ u.identifiant }}" class="border px-2 py-1 text-black rounded w-full">
+            <input type="password" name="password" placeholder="Laisser vide pour ne pas changer" class="border px-2 py-1 text-black rounded w-full mt-1">
+            <select name="role" class="bg-black text-white w-full mt-1">
+              <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>Administrateur</option>
+              <option value="serveur" {% if u.role == 'serveur' %}selected{% endif %}>Serveur</option>
+              <option value="cuisinier" {% if u.role == 'cuisinier' %}selected{% endif %}>Cuisinier</option>
+              <option value="comptable" {% if u.role == 'comptable' %}selected{% endif %}>Comptable</option>
+            </select>
+            <button type="submit" name="modifier_utilisateur" class="mt-2 bg-yellow-500 w-full text-white px-2 py-1 rounded">
+              Modifier
+            </button>
+           </form>
+          </td>
+
+          <!-- Formulaire pour supprimer un utilisateur -->
+          <td class="border px-2 py-1">
+            <form method="POST" onsubmit="return confirm('Voulez-vous vraiment supprimer cet utilisateur ?');">
+              {% csrf_token %}
+              <input type="hidden" name="user_id" value="{{ u.id }}">
+              <button name="supprimer_utilisateur" class="bg-red-600 text-white px-2 py-1 rounded">
+                Supprimer
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <button onclick="openModal('modalAjouterUser')" class="bg-green-600 text-white px-4 py-2 rounded">
+      ➕ Ajouter utilisateur
+    </button>
+  </div>
+</div>
+
+<!-- ================= MODAL AJOUT UTILISATEUR ================= -->
+<div id="modalAjouterUser" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+  <div class="bg-black rounded-lg p-6 w-96 relative">
+    <button onclick="closeModal('modalAjouterUser')" class="absolute top-3 right-3 text-red-600 text-2xl">&times;</button>
+
+    <h2 class="font-bold mb-4">Ajouter un utilisateur</h2>
+
+    <form method="POST">
+      {% csrf_token %}
+      <input type="hidden" name="ajouter_utilisateur">
+
+      <div class="mb-3">
+        <label>Identifiant</label>
+        <input type="text" name="username" required class="w-full border rounded px-2 py-1 text-black">
+      </div>
+
+      <div class="mb-3">
+        <label>Mot de passe</label>
+        <input type="password" name="password" required class="w-full border rounded px-2 py-1 text-black">
+      </div>
+
+      <div class="mb-3">
+        <label>Rôle</label>
+        <select name="role" class="w-full border rounded px-2 py-1 text-black">
+          <option value="admin">Administrateur</option>
+          <option value="serveur">Serveur</option>
+          <option value="cuisinier">Cuisinier</option>
+          <option value="comptable">Comptable</option>
+        </select>
+      </div>
+
+      <button type="submit" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
+        Enregistrer
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- ================= MODAL GERER TABLES / TABLETTES ================= -->
+<div id="modalGererTables" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+  <div class="bg-black rounded-lg p-6 w-3/4 max-h-[80vh] overflow-y-auto relative">
+    <button onclick="closeModal('modalGererTables')" class="absolute top-2 right-2 text-red-600 text-2xl">&times;</button>
+
+    <h2 class="text-2xl font-bold mb-4">Gérer les tables et tablettes</h2>
+
+    <!-- ===== FORMULAIRE UNIQUE POUR TABLE + TABLETTE ===== -->
+    <form method="POST" class="mb-6">
+      {% csrf_token %}
+      <input type="hidden" name="ajouter_tablette">
+
+      <div class="mb-3">
+        <label>Numéro de table</label>
+        <input type="number" name="numero_table" required class="w-full border rounded px-2 py-1 text-black">
+      </div>
+
+      <div class="mb-3">
+        <label>Nombre de places</label>
+        <input type="number" name="nombre_places" required class="w-full border rounded px-2 py-1 text-black">
+      </div>
+
+      <div class="mb-3">
+        <label>Identifiant Tablette</label>
+        <input type="text" name="username_tablette" required class="w-full border rounded px-2 py-1 text-black">
+      </div>
+
+      <div class="mb-3">
+        <label>Mot de passe Tablette</label>
+        <input type="password" name="password_tablette" required class="w-full border rounded px-2 py-1 text-black">
+      </div>
+
+      <div class="flex gap-2 mt-2">
+        <button type="submit" name="creer_tablette" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+          Créer et Lier
+        </button>
+        <button type="submit" name="activer_tablette" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          Activer Tablette
+        </button>
+      </div>
+    </form>
+
+    <!-- ===== TABLE EXISTANTES ===== -->
+    <table class="w-full table-auto border-collapse">
+      <thead>
+        <tr>
+          <th class="border px-2 py-1">ID Table</th>
+          <th class="border px-2 py-1">Numéro</th>
+          <th class="border px-2 py-1">Tablette</th>
+          <th class="border px-2 py-1">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in tables %}
+        <tr>
+          <td class="border px-2 py-1">{{ t.id }}</td>
+          <td class="border px-2 py-1">{{ t.numero }}</td>
+          <td class="border px-2 py-1">
+            {% if t.user_tablette %}
+              {{ t.user_tablette.username }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td class="border px-2 py-1">
+            <form method="POST" class="flex gap-1">
+              {% csrf_token %}
+              <input type="hidden" name="table_id" value="{{ t.id }}">
+              <button type="submit" name="supprimer_table" class="bg-red-600 text-white px-2 py-1 rounded">
+                Supprimer
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif%}
+<!-- ================= JS POUR MODAL ================= -->
+<script>
+function openModal(id) {
+  document.getElementById(id).classList.remove('hidden');
+  document.getElementById(id).classList.add('flex');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.add('hidden');
+  document.getElementById(id).classList.remove('flex');
+}
+</script>
+
+
+{% endblock %}
+
+

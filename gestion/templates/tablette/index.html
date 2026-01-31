@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if tablette %}
+        Tablette - Table {{ tablette.table.numero }}
+    {% else %}
+        Tablette
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+
+{% if tablette %}
+    <h1 class="text-2xl font-bold mb-6">
+        Bienvenue à la table {{ tablette.table.numero }}
+    </h1>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+
+        <!-- Voir le Menu -->
+        <a href="{% url 'cuisinier_index' %}"
+           class="bg-white p-8 rounded-xl shadow hover:shadow-2xl transition text-center">
+            <div class="text-5xl mb-3">🍽️</div>
+            <span class="font-semibold text-lg">Voir le Menu</span>
+        </a>
+
+        <!-- Voir Panier -->
+        <a href="{% url 'voir_panier' %}"
+           class="bg-white p-8 rounded-xl shadow hover:shadow-2xl transition text-center">
+            <div class="text-5xl mb-3">🛒</div>
+            <span class="font-semibold text-lg">Panier</span>
+        </a>
+
+        <!-- Valider Commande -->
+        {% if panier %}
+            <a href="{% url 'valider_panier' panier.id %}"
+               class="bg-white p-8 rounded-xl shadow hover:shadow-2xl transition text-center">
+                <div class="text-5xl mb-3">✅</div>
+                <span class="font-semibold text-lg">Valider Commande</span>
+            </a>
+        {% else %}
+            <span class="bg-gray-300 p-8 rounded-xl text-center text-lg">
+                Pas de panier
+            </span>
+        {% endif %}
+
+    </div>
+
+{% else %}
+    <!-- Sécurité si aucune tablette -->
+    <div class="bg-red-100 text-red-700 p-6 rounded-xl">
+        Aucune tablette active. Veuillez sélectionner une table.
+    </div>
+{% endif %}
+
+{% endblock %}
+
+
+

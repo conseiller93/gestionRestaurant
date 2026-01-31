@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block navbar %}
+    {% include "navbar.html" %}
+{% endblock %}
+{% block title %}Comptabilité{% endblock %}
+{% block content %}
+<div class="flex flex-col lg:flex-row justify-center items-start min-h-screen bg-black-100 p-4">
+
+  <!-- SIDEBAR -->
+  <aside class="bg-blue-700 text-blue w-64 p-6 flex-shrink-0 rounded-lg shadow">
+    <h2 class="text-blue font-bold mb-2">Comptabilité</h2>
+    <p class="text-blue mb-6">
+      Connecté : <strong>{{ request.user.identifiant }}</strong><br>
+      Gestionnaire de la caisse
+    </p>
+    <div class="space-y-3">
+      <button onclick="showSection('paiements')" class="w-full bg-white text-green-700 py-2 rounded">💳 Paiements</button>
+      <button onclick="showSection('caisse')" class="w-full bg-white text-green-700 py-2 rounded">💰 Caisse</button>
+      <button onclick="showSection('depenses')" class="w-full bg-white text-green-700 py-2 rounded">📉 Dépenses</button>
+    </div>
+  </aside>
+
+  <!-- CONTENU PRINCIPAL -->
+  <main id="mainContent" class="flex-1 bg-black-200 p-6 overflow-auto rounded-lg shadow max-w-4xl w-full">
+    
+    <!-- PAIEMENTS -->
+    <section id="paiements" class="section h-auto overflow-auto">
+      <h2 class="text-blue font-bold mb-4">Commandes à payer</h2>
+      <div class="space-y-3">
+        {% for cmd in commandes_a_payer %}
+        <form method="post" class="bg-transparent p-4 rounded shadow flex justify-between items-center">
+          {% csrf_token %}
+          <input type="hidden" name="payer_commande">
+          <input type="hidden" name="commande" value="{{ cmd.id }}">
+          <div>
+            <p>Commande #{{ cmd.id }}</p>
+            <p class="text-blue text-blue-600">Total : {{ cmd.total }} FG</p>
+          </div>
+          <div class="flex gap-2">
+            <select name="mode" class="border px-2 py-1 rounded">
+              <option value="cash">Espèces</option>
+            </select>
+            <button class="bg-green-600 text-white px-4 py-1 rounded">Valider</button>
+          </div>
+        </form>
+        {% empty %}
+          <p class="text-blue">Aucune commande à payer</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- CAISSE -->
+    <section id="caisse" class="section w-full h-full overflow-auto hidden">
+      <h2 class="text-blue font-bold mb-4">Solde de la caisse</h2>
+      <div class="bg-blue p-6 rounded shadow text-2xl text-blue-700">
+        {{ solde }} FG
+      </div>
+    </section>
+
+    <!-- DEPENSES -->
+    <section id="depenses" class="section w-full h-full overflow-auto hidden">
+      <h2 class="text-xl font-bold mb-4">Dépenses</h2>
+      {% if erreur_depense %}
+        <p class="text-red-600 mb-3">{{ erreur_depense }}</p>
+      {% endif %}
+      <form method="post" class="bg-transparent p-4 rounded shadow mb-4">
+        {% csrf_token %}
+        <input type="hidden" name="ajouter_depense">
+        <div class="mb-2">
+          <label for="description" class="block text-sm font-medium mb-1">Motif :</label>
+          <input type="text" id="description" name="description" placeholder="Motif" class="border w-full px-2 py-1 rounded">
+        </div>
+        <div class="mb-2">
+          <label for="montant" class="block text-sm font-medium mb-1">Montant :</label>
+          <input type="number" id="montant" name="montant" placeholder="Montant" class="border w-full px-2 py-1 rounded">
+        </div>
+        <div class="mb-2">
+          <label for="categorie" class="block text-sm font-medium mb-1">Catégorie :</label>
+          <select id="categorie" name="categorie" class="border w-full px-2 py-1 rounded">
+            <option>Achat</option>
+            <option>Salaire</option>
+            <option>Facture</option>
+            <option>Autre</option>
+          </select>
+        </div>
+        <button class="bg-red-600 text-white px-4 py-2 rounded">Enregistrer dépense</button>
+      </form>
+      <ul class="space-y-1">
+        {% for d in depenses %}
+          <li class="bg-gray-50 p-2 rounded">{{ d.date|date:"d/m/Y" }} – {{ d.description }} – {{ d.montant }} FG</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+  </main>
+</div>
+<script>
+function showSection(id) {
+  // Masquer toutes les sections
+  document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+
+  // Afficher la section sélectionnée
+  document.getElementById(id).classList.remove('hidden');
+
+  // Changer le background du conteneur principal et la couleur du texte
+  const main = document.getElementById('mainContent');
+  main.style.backgroundColor = 'black';
+  main.style.color = 'blue';
+
+  // Forcer les textes internes (inputs, labels) à rester visibles
+  main.querySelectorAll('input, select, label, p, h2').forEach(el => {
+    el.style.color = 'blue';
+  });
+}
+</script>
+
+
+
+{% endblock %}
