@@ -1,34 +1,30 @@
-<footer class="bg-gray-800 text-gray-300">
+<footer id="main-footer" class="bg-gray-800 text-gray-300 transition-colors duration-300 border-t border-gray-700">
 
     <div class="max-w-7xl mx-auto px-6 py-6 grid grid-cols-1 md:grid-cols-4 gap-6 text-sm">
 
-        <!-- HEURE -->
         <div>
-            <p class="text-yellow-400 font-semibold">Heure</p>
-            <p id="clock" class="text-lg font-mono"></p>
+            <p class="text-yellow-400 font-semibold footer-label">Heure</p>
+            <p id="clock" class="text-lg font-mono footer-text"></p>
         </div>
 
-        <!-- DATE -->
         <div>
-            <p class="text-yellow-400 font-semibold">Date</p>
-            <p id="date" class="text-lg"></p>
+            <p class="text-yellow-400 font-semibold footer-label">Date</p>
+            <p id="date" class="text-lg footer-text"></p>
         </div>
 
-        <!-- LOCALISATION -->
         <div>
-            <p class="text-yellow-400 font-semibold">Localisation</p>
-            <p id="location-name">Chargement...</p>
+            <p class="text-yellow-400 font-semibold footer-label">Localisation</p>
+            <p id="location-name" class="footer-text">Chargement...</p>
         </div>
 
-        <!-- MÉTÉO -->
         <div>
-            <p class="text-yellow-400 font-semibold">Météo</p>
-            <p id="weather">Chargement...</p>
+            <p class="text-yellow-400 font-semibold footer-label">Météo</p>
+            <p id="weather" class="footer-text">Chargement...</p>
         </div>
 
     </div>
 
-    <div class="text-center text-xs text-gray-500 pb-4">
+    <div class="text-center text-xs text-gray-500 pb-4 footer-bottom">
         © {{ now|date:"Y" }} Restaurant Élégance — Tous droits réservés
     </div>
 </footer>

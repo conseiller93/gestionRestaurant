@@ -5,42 +5,244 @@
 {% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-
-    <div class="bg-gray-800 rounded-xl shadow-md p-10">
-        <h1 class="text-4xl font-extrabold text-yellow-400 mb-4">
-            Bienvenue {{ request.user.identifiant }}
-        </h1>
-        <p class="text-gray-300 text-lg">
-            Vous êtes connecté au système de gestion du <span class="font-semibold text-gray-100">Restaurant Élégance</span>.
-        </p>
+<div class="max-w-7xl mx-auto px-4 py-8" x-data="{ showWelcome: false, showPasswordModal: false }" x-init="setTimeout(() => showWelcome = true, 100)">
+    
+    <div x-show="showWelcome" 
+         x-transition:enter="transition ease-out duration-700"
+         x-transition:enter-start="opacity-0 transform translate-y-4"
+         x-transition:enter-end="opacity-100 transform translate-y-0"
+         class="relative overflow-hidden bg-gray-800/50 backdrop-blur-md rounded-3xl p-8 border border-gray-700 shadow-2xl mb-10">
+        
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="flex-1">
+                <h1 class="text-5xl font-black tracking-tight text-white mb-2">
+                    Bienvennue, <span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
+                        {% if request.user.first_name %}{{ request.user.first_name }} {{ request.user.last_name}}{% else %}{{ request.user.identifiant }}{% endif %}</span> 👋
+                </h1>
+                <div class="flex flex-wrap items-center gap-4 text-gray-400">
+                    <span class="flex items-center gap-1.5 bg-gray-900/50 px-3 py-1 rounded-full border border-gray-700">
+                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        {{ request.user.get_role_display }}
+                    </span>
+                {% if request.user.role != 'tablette' %}
+                    <button @click="showPasswordModal = true" class="flex items-center gap-2 text-xs bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-1.5 rounded-full border border-white/10 transition-all cursor-pointer">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                        Sécurité compte
+                    </button>
+                    <span class="flex items-center gap-1.5 bg-gray-900/50 px-3 py-1 rounded-full border border-gray-700">
+                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        {{ request.user.email}}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            
+           
+                        
+            <div class="text-right hidden md:block">
+                <p class="text-sm uppercase tracking-widest text-gray-500 font-bold">Terminal Actif</p>
+                <p class="text-2xl font-serif italic text-yellow-200">Elegance Restaurant</p>
+            </div>
+        </div>
+        <div class="absolute -top-24 -right-24 w-64 h-64 bg-yellow-500/10 rounded-full blur-3xl"></div>
+         {% if messages %}
+        <div class="fixed top-4 right-4 z-[100] space-y-2">
+            {% for message in messages %}
+            <div 
+                x-data="{ show: true }" 
+                x-show="show" 
+                x-init="setTimeout(() => show = false, 5000)" 
+                x-transition:leave="transition ease-in duration-500"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-90"
+                class="p-4 rounded-2xl bg-gray-800/90 backdrop-blur border border-white/10 shadow-2xl {% if message.tags == 'success' %}text-green-400{% else %}text-red-400{% endif %} text-xs font-bold flex items-center gap-3">
+                
+                <span>{{ message }}</span>
+                
+                <button @click="show = false" class="ml-auto text-white/50 hover:text-white">&times;</button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
     </div>
 
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        {% if request.user.role == 'admin' or request.user.role == 'serveur' %}
+        <a href="{% url 'commande_index' %}" class="group bg-gray-800 p-6 rounded-2xl border border-gray-700 hover:border-yellow-500 transition-all duration-300 hover:-translate-y-2">
+            <div class="w-12 h-12 bg-yellow-500/20 rounded-xl flex items-center justify-center text-yellow-500 mb-4 group-hover:bg-yellow-500 group-hover:text-gray-900 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Prise de Commande</h3>
+            <p class="text-gray-400 text-sm">Gérez les tables et les commandes clients.</p>
+        </a>
+        {% endif %}
+
+        {% if request.user.role == 'admin' or request.user.role == 'cuisinier' %}
+        <a href="{% url 'cuisinier_index' %}" class="group bg-gray-800 p-6 rounded-2xl border border-gray-700 hover:border-orange-500 transition-all duration-300 hover:-translate-y-2">
+            <div class="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center text-orange-500 mb-4 group-hover:bg-orange-500 group-hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m12 4a2 2 0 100-4m0 4a2 2 0 110-4m-6 0a2 2 0 100 4m0-4a2 2 0 110 4"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Cuisine</h3>
+            <p class="text-gray-400 text-sm">Préparez les bons et validez le service.</p>
+        </a>
+        {% endif %}
+
+        {% if request.user.role == 'admin' or request.user.role == 'comptable' %}
+        <a href="{% url 'comptable_index' %}" class="group bg-gray-800 p-6 rounded-2xl border border-gray-700 hover:border-green-500 transition-all duration-300 hover:-translate-y-2">
+            <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center text-green-500 mb-4 group-hover:bg-green-500 group-hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Comptabilité</h3>
+            <p class="text-gray-400 text-sm">Analysez les recettes et les dépenses.</p>
+        </a>
+        {% endif %}
+
+        {% if request.user.role == 'admin' %}
+        <a href="{% url 'controle_general' %}" class="group bg-gray-800 p-6 rounded-2xl border border-gray-700 hover:border-purple-500 transition-all duration-300 hover:-translate-y-2">
+            <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center text-purple-500 mb-4 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Système</h3>
+            <p class="text-gray-400 text-sm">Gérez les comptes et les accès.</p>
+        </a>
+        {% endif %}
+    </div>
+
+ {% if request.user.role == 'admin' or request.user.role == 'comptable' %}
+<div class="mt-12 bg-gray-900/30 p-8 rounded-[3rem] border border-white/5">
+    <h2 class="text-2xl font-black text-white mb-8 italic uppercase tracking-tighter">
+        Statistiques <span class="text-yellow-500">Globales</span>
+    </h2>
+    
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div class="bg-gray-700 border border-gray-600 rounded-lg p-6 hover:bg-gray-600 transition">
-            <h2 class="text-xl font-semibold mb-2 text-yellow-400">Navigation</h2>
-            <p class="text-gray-300 text-sm">
-                Accédez à votre espace via la barre de navigation selon votre rôle.
+        <div class="bg-gray-800/40 p-6 rounded-2xl border border-gray-700">
+            <p class="text-gray-500 text-[10px] font-black uppercase mb-1">Commandes (Aujourd'hui)</p>
+            <p class="text-3xl font-black text-white italic">{{ nb_commandes }}</p>
+        </div>
+
+        <div class="bg-gray-800/40 p-6 rounded-2xl border border-gray-700">
+            <p class="text-gray-500 text-[10px] font-black uppercase mb-1">Tables</p>
+            <p class="text-3xl font-black text-white italic">
+                {{ tables_occupees }} / {{ total_tables }}
             </p>
         </div>
 
-        <div class="bg-gray-700 border border-gray-600 rounded-lg p-6 hover:bg-gray-600 transition">
-            <h2 class="text-xl font-semibold mb-2 text-yellow-400">Rôles</h2>
-            <p class="text-gray-300 text-sm">
-                Chaque utilisateur dispose de permissions spécifiques.
+        <div class="bg-gray-800/40 p-6 rounded-2xl border border-gray-700">
+            <p class="text-gray-500 text-[10px] font-black uppercase mb-1">Recettes du jour</p>
+            <p class="text-3xl font-black text-green-500 italic">
+                {{ recette_total|floatformat:0 }} FG
             </p>
         </div>
+    </div>
+</div>
+{% endif %}
+{% if request.user.role == 'admin' or request.user.role == 'comptable' or request.user.role == 'tablette' %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 mb-10">
+    
+    <div class="bg-gray-800/40 backdrop-blur-md border border-white/5 p-8 rounded-[3rem] shadow-xl">
+        <div class="flex items-center gap-3 mb-6">
+            <span class="text-2xl">🔥</span>
+            <h3 class="text-white font-black italic uppercase text-sm tracking-[0.2em]">
+                Top <span class="text-orange-500">Ventes</span>
+            </h3>
+        </div>
+        
+        <div class="space-y-4">
+            {% for p in plats_populaires %}
+            <div class="flex items-center justify-between bg-gray-900/40 p-4 rounded-2xl border border-white/5 group hover:border-orange-500/30 transition-colors">
+                <div class="flex items-center gap-3">
+                    <span class="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500 font-black text-xs italic">
+                        #{{ forloop.counter }}
+                    </span>
+                    <span class="text-gray-200 font-bold">{{ p.nom }}</span>
+                </div>
+                <span class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Performant</span>
+            </div>
+            {% empty %}
+            <div class="text-center py-4">
+                <p class="text-gray-500 text-xs italic">Aucune donnée disponible</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
 
-        <div class="bg-gray-700 border border-gray-600 rounded-lg p-6 hover:bg-gray-600 transition">
-            <h2 class="text-xl font-semibold mb-2 text-yellow-400">Administration</h2>
-            <p class="text-gray-300 text-sm">
-                Les administrateurs ont accès à l’ensemble des sections.
+    <div class="relative overflow-hidden bg-gradient-to-br from-yellow-500/10 to-orange-600/10 border border-yellow-500/20 p-8 rounded-[3rem] flex flex-col justify-center items-center text-center shadow-xl">
+        <div class="absolute top-6 right-6">
+            <span class="animate-pulse flex h-2 w-2 rounded-full bg-yellow-500"></span>
+        </div>
+
+        <span class="bg-yellow-500 text-black text-[10px] font-black px-4 py-1.5 rounded-full mb-4 uppercase tracking-tighter">
+            ✨ Suggestion IA Tablette
+        </span>
+
+        {% if suggestion_chef %}
+            <h4 class="text-white text-3xl font-black italic tracking-tighter mb-2">{{ suggestion_chef.nom }}</h4>
+            <p class="text-gray-400 text-xs leading-relaxed max-w-[250px]">
+                Ce plat est actuellement mis en avant sur toutes les tablettes pour optimiser vos stocks.
             </p>
+            <div class="mt-6 flex items-center gap-2 text-yellow-500 font-black text-[10px] uppercase tracking-widest">
+                <span>Taux d'attraction</span>
+                <span class="bg-yellow-500/20 px-2 py-1 rounded">High</span>
+            </div>
+        {% else %}
+            <p class="text-gray-500 text-xs italic">Calcul des suggestions en cours...</p>
+        {% endif %}
+
+        <div class="absolute -bottom-10 -right-10 w-32 h-32 bg-yellow-500/5 rounded-full blur-3xl"></div>
+    </div>
+
+</div>
+{% endif %}
+
+    <div x-show="showPasswordModal" 
+         class="fixed inset-0 z-[100] flex items-center justify-center p-4"
+         x-cloak>
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" @click="showPasswordModal = false"></div>
+        
+        <div class="relative bg-[#1a1d24] border border-white/10 w-full max-w-sm rounded-[2.5rem] shadow-2xl overflow-hidden transform transition-all"
+             x-show="showPasswordModal"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-90"
+             x-transition:enter-end="opacity-100 scale-100">
+            
+            <div class="px-8 pt-8 pb-4 text-center">
+                <div class="w-14 h-14 bg-yellow-500/10 rounded-2xl flex items-center justify-center text-yellow-500 mx-auto mb-4 border border-yellow-500/20">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </div>
+                <h2 class="text-xl font-black text-white uppercase italic">Sécurité</h2>
+                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Changer le mot de passe</p>
+                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">le nouveau     mot de passe doit contenir au moins 8 caractères</p>
+            </div>
+
+            <form action="{% url 'password_change' %}" method="POST" class="p-8 space-y-4">
+                {% csrf_token %}
+                <div>
+                    <input type="password" name="old_password" placeholder="Ancien mot de passe" required
+                           class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-yellow-500 outline-none transition-all">
+                </div>
+                <div>
+                    <input type="password" name="new_password1" placeholder="Nouveau mot de passe" required
+                           class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-yellow-500 outline-none transition-all">
+                </div>
+                <div>
+                    <input type="password" name="new_password2" placeholder="Confirmer nouveau" required
+                           class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-yellow-500 outline-none transition-all">
+                </div>
+                
+                <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black py-4 rounded-xl uppercase tracking-widest text-xs transition-all active:scale-95 shadow-lg shadow-yellow-500/20">
+                    Mettre à jour
+                </button>
+                
+                <button type="button" @click="showPasswordModal = false" class="w-full text-gray-500 hover:text-white text-[10px] font-bold uppercase transition-colors">
+                    Annuler
+                </button>
+            </form>
         </div>
     </div>
 
 </div>
+
+<style> [x-cloak] { display: none !important; } </style>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 {% endblock %}
-
-
-

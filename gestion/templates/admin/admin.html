@@ -1,269 +1,323 @@
 {% extends 'base.html' %}
 
 {% block navbar %}
-    {% include "navbar.html" %}
+  {% include "navbar.html" %}
 {% endblock %}
 
 {% block title %}Administration{% endblock %}
 
 {% block content %}
-<h1 class="text-3xl font-bold mb-6">Tableau de bord Administrateur</h1>
+<div class="max-w-[1600px] mx-auto px-4 py-6">
 
-<!-- ================================= GRID PRINCIPAL ================================= -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  <div class="text-center mb-10">
+    <h1 class="text-4xl font-bold text-yellow-400 mb-2 admin-title">👑 Gestion Des Utilisateurs</h1>
+    <p class="text-gray-400 admin-subtitle">Gestion des utilisateurs, tables et tablettes du restaurant.</p>
+  </div>
 
-    <!-- ===== GESTION DES UTILISATEURS ===== -->
-    <div class="bg-black shadow rounded p-7">
-        <h2 class="text-xl font-semibold mb-2">Utilisateurs</h2>
-        <p class="text-gray-600 mb-4">Gérer les comptes utilisateurs</p>
-        {% if user.is_authenticated and user.role == 'admin' %}
-        <button onclick="openModal('modalGerer')" 
-                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            Gérer
+ {% if messages %}
+  {% for message in messages %}
+    <div class="flash-message mb-4 px-4 py-3 rounded-lg text-sm font-medium
+      {% if message.tags == 'success' %} bg-green-800 text-green-200 border border-green-600
+      {% elif message.tags == 'error' %} bg-red-800 text-red-200 border border-red-600
+      {% else %} bg-gray-700 text-gray-200 border border-gray-500 {% endif %}">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+  <div class="mb-8 flex justify-end">
+    <div class="relative" x-data="{ open: false }">
+      <button @click="open = !open"
+              class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg text-white font-semibold flex items-center gap-2 transition shadow-lg">
+        ➕ Ajouter
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+      </button>
+
+      <div x-show="open" @click.away="open = false"
+           x-transition:enter="transition ease-out duration-100"
+           class="absolute right-0 mt-2 w-64 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl z-50 dropdown-admin">
+        <button @click="openModal('modalAjouterUser'); open = false"
+                class="w-full text-left px-5 py-3 hover:bg-gray-700 text-gray-200 rounded-t-lg transition flex items-center gap-3 btn-dropdown-text">
+          <span class="text-xl">👤</span> <span class="font-medium">Créer un utilisateur</span>
         </button>
+        <button @click="openModal('modalAjouterTable'); open = false"
+                class="w-full text-left px-5 py-3 hover:bg-gray-700 text-gray-200 rounded-b-lg transition flex items-center gap-3 border-t border-gray-700 btn-dropdown-text">
+          <span class="text-xl">🪑</span> <span class="font-medium">Créer table + tablette</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <section class="mb-12">
+    <h2 class="text-2xl text-gray-100 font-bold mb-6 flex items-center gap-3 section-title">
+      <span class="text-3xl">👤</span> Utilisateurs
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {% for u in utilisateurs %}
+      <div class="bg-gray-800 p-5 rounded-xl border border-gray-700 hover:border-gray-500 transition card-admin">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-12 h-12 rounded-full bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center text-white font-bold text-lg">
+            {{ u.identifiant|first|upper }}
+          </div>
+          <div class="flex-1">
+            <p class="text-gray-100 font-bold text-base user-id-text">{{ u.identifiant }}</p>
+            <span class="inline-block text-xs font-semibold px-2 py-0.5 rounded-full mt-1
+              {% if u.role == 'admin' %} bg-red-800 text-red-200
+              {% elif u.role == 'serveur' %} bg-blue-800 text-blue-200
+              {% elif u.role == 'cuisinier' %} bg-purple-800 text-purple-200
+              {% elif u.role == 'comptable' %} bg-yellow-800 text-yellow-200
+              {% else %} bg-green-800 text-green-200 {% endif %}">
+              {{ u.get_role_display }}
+            </span>
+          </div>
+        </div>
+
+        {% if u.role != 'tablette' %}
+          <div class="mb-2 bg-gray-900 rounded-lg px-3 py-2 sub-card">
+            <p class="text-gray-400 text-xs mb-0.5">Nom complet</p>
+            <p class="text-gray-200 text-sm font-medium info-text">
+              {% if u.first_name or u.last_name %}{{ u.first_name }} {{ u.last_name }}{% else %}—{% endif %}
+            </p>
+          </div>
+          <div class="mb-3 bg-gray-900 rounded-lg px-3 py-2 sub-card">
+            <p class="text-gray-400 text-xs mb-0.5">Email</p>
+            <p class="text-gray-200 text-sm break-all info-text">{{ u.email|default:"—" }}</p>
+          </div>
         {% endif %}
-    </div>
 
-    <!-- ===== GESTION DES TABLES / TABLETTES ===== -->
-    <div class="bg-black shadow rounded p-7">
-        <h2 class="text-xl font-semibold mb-2">Tables / Tablettes</h2>
-        <p class="text-gray-600 mb-4">Gérer les tables et leurs tablettes</p>
-        <button onclick="openModal('modalGererTables')" 
-                class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-            Gérer
-        </button>
-    </div>
-
-    <!-- ===== GESTION DU MENU ===== -->
-    <div class="bg-black shadow rounded p-7">
-        <h2 class="text-xl font-semibold mb-2">Menu</h2>
-        <p class="text-gray-600 mb-4">Gestion des plats</p>
-        <a href="{% url 'cuisinier_index' %}" 
-           class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
-            Menu
-        </a>
-    </div>
-
-    <!-- ===== COMMANDES ===== -->
-    <div class="bg-black shadow rounded p-7">
-        <h2 class="text-xl font-semibold mb-2">Commandes</h2>
-        <p class="text-gray-600 mb-4">Suivre les commandes</p>
-        <button onclick="openModal('modalCommandes')" 
-                class="bg-yellow-500 text-black px-4 py-2 rounded hover:bg-yellow-600">
-            Consulter
-        </button>
-    </div>
-
-    <!-- ===== CAISSE ===== -->
-    <div class="bg-black shadow rounded p-7">
-        <h2 class="text-xl font-semibold mb-2">Caisse</h2>
-        <p class="text-gray-600 mb-4">Voir le solde et les dépenses</p>
-        <a href="{% url 'comptable_index' %}" 
-           class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-            Comptabilité
-        </a>
-    </div>
-
-</div> <!-- /grid -->
-
-{% if user.is_authenticated and user.role == 'admin' %}
-
-<!-- ================= MODAL GERER UTILISATEURS ================= -->
-<div id="modalGerer" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-  <div class="bg-black rounded-lg p-6 w-3/4 max-h-[80vh] overflow-y-auto relative">
-    <button onclick="closeModal('modalGerer')" class="absolute top-2 right-2 text-red-600 text-2xl">&times;</button>
-
-    <h2 class="text-2xl font-bold mb-4">Gérer les comptes utilisateurs</h2>
-
-    <!-- TABLE DES UTILISATEURS -->
-    <table class="w-full table-auto border-collapse mb-4">
-      <thead>
-        <tr>
-          <th class="border px-2 py-1">ID</th>
-          <th class="border px-2 py-1">Identifiant</th>
-          <th class="border px-2 py-1">Email</th>
-          <th class="border px-2 py-1">Rôle</th>
-          <th class="border px-2 py-1">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for u in utilisateurs %}
-        <tr>
-          <td class="border px-2 py-1">{{ u.id }}</td>
-          <td class="border px-2 py-1">{{ u.identifiant }}</td>
-          <td class="border px-2 py-1">{{ u.email }}</td>
-
-          <!-- Formulaire pour modifier un utilisateur -->
-          <td class="border px-2 py-1">
-           <form method="POST">
+        <div class="flex gap-2 mt-4">
+          <button onclick="openModifierUser('{{ u.id }}','{{ u.identifiant }}','{{ u.first_name }}','{{ u.last_name }}','{{ u.email }}','{{ u.role }}')"
+                  class="flex-1 bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm px-3 py-2 rounded-lg transition btn-edit">
+            ✏️ Modifier
+          </button>
+          <form method="POST" id="form-del-user-{{ u.id }}" class="flex-1">
             {% csrf_token %}
             <input type="hidden" name="user_id" value="{{ u.id }}">
-            <input type="text" name="username" value="{{ u.identifiant }}" class="border px-2 py-1 text-black rounded w-full">
-            <input type="password" name="password" placeholder="Laisser vide pour ne pas changer" class="border px-2 py-1 text-black rounded w-full mt-1">
-            <select name="role" class="bg-black text-white w-full mt-1">
-              <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>Administrateur</option>
-              <option value="serveur" {% if u.role == 'serveur' %}selected{% endif %}>Serveur</option>
-              <option value="cuisinier" {% if u.role == 'cuisinier' %}selected{% endif %}>Cuisinier</option>
-              <option value="comptable" {% if u.role == 'comptable' %}selected{% endif %}>Comptable</option>
-            </select>
-            <button type="submit" name="modifier_utilisateur" class="mt-2 bg-yellow-500 w-full text-white px-2 py-1 rounded">
-              Modifier
+            <input type="hidden" name="supprimer_utilisateur">
+            <button type="button" onclick="askConfirmDelete('form-del-user-{{ u.id }}')"
+                    class="w-full bg-red-700 hover:bg-red-600 text-white text-sm px-3 py-2 rounded-lg transition">
+              🗑️ Supprimer
             </button>
-           </form>
-          </td>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
 
-          <!-- Formulaire pour supprimer un utilisateur -->
-          <td class="border px-2 py-1">
-            <form method="POST" onsubmit="return confirm('Voulez-vous vraiment supprimer cet utilisateur ?');">
-              {% csrf_token %}
-              <input type="hidden" name="user_id" value="{{ u.id }}">
-              <button name="supprimer_utilisateur" class="bg-red-600 text-white px-2 py-1 rounded">
-                Supprimer
-              </button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <section>
+  <h2 class="text-2xl text-gray-100 font-bold mb-6 flex items-center gap-3 section-title">
+    <span class="text-3xl">🪑</span> Tables & Tablettes
+  </h2>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    {% for t in tables %}
+    <div class="bg-gray-800 p-5 rounded-xl border border-gray-700 card-admin">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-full bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center text-2xl">🪑</div>
+          <div>
+            <p class="text-gray-100 font-bold text-lg user-id-text">Table {{ t.numero }}</p>
+            <p class="text-gray-400 text-sm">{{ t.nombre_places }} places</p>
+          </div>
+        </div>
+      </div>
 
-    <button onclick="openModal('modalAjouterUser')" class="bg-green-600 text-white px-4 py-2 rounded">
-      ➕ Ajouter utilisateur
-    </button>
+              <div class="flex flex-col gap-2">
+                <div class="mt-2 text-center">
+            <code class="text-[10px] text-gray-500 break-all bg-black/20 p-1 rounded">
+                /login/?u={{ t.user_tablette.identifiant }}&p=12345cd
+            </code>
+        </div>
+
+        <form method="POST" target="_blank" class="mt-2">
+            {% csrf_token %}
+            <input type="hidden" name="table_id" value="{{ t.id }}">
+            <button type="submit" name="generer_qr" class="w-full bg-blue-600 ...">
+                📸 Voir QR Code
+            </button>
+        </form>
+        <form method="POST" id="form-del-table-{{ t.id }}">
+          {% csrf_token %}
+          <input type="hidden" name="table_id" value="{{ t.id }}">
+          <input type="hidden" name="supprimer_table">
+          <button type="button" onclick="askConfirmDelete('form-del-table-{{ t.id }}')"
+                  class="w-full bg-red-700 hover:bg-red-600 text-white py-2 rounded-lg transition">
+            🗑️ Supprimer
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
   </div>
+</section>
 </div>
 
-<!-- ================= MODAL AJOUT UTILISATEUR ================= -->
-<div id="modalAjouterUser" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-  <div class="bg-black rounded-lg p-6 w-96 relative">
-    <button onclick="closeModal('modalAjouterUser')" class="absolute top-3 right-3 text-red-600 text-2xl">&times;</button>
-
-    <h2 class="font-bold mb-4">Ajouter un utilisateur</h2>
-
+<div id="modalAjouterUser" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4">
+  <div class="bg-gray-800 border border-gray-700 p-7 rounded-2xl w-full max-w-lg relative modal-content-admin">
+    <button onclick="closeModal('modalAjouterUser')" class="absolute top-5 right-5 text-gray-400 hover:text-white text-3xl">&times;</button>
+    <h2 class="text-gray-100 font-bold text-xl mb-6 modal-title">👤 Nouvel utilisateur</h2>
     <form method="POST">
       {% csrf_token %}
       <input type="hidden" name="ajouter_utilisateur">
-
-      <div class="mb-3">
-        <label>Identifiant</label>
-        <input type="text" name="username" required class="w-full border rounded px-2 py-1 text-black">
+      <div class="mb-4">
+        <label class="block text-gray-300 text-sm label-admin mb-2">Identifiant</label>
+        <input name="identifiant" required class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin">
       </div>
-
-      <div class="mb-3">
-        <label>Mot de passe</label>
-        <input type="password" name="password" required class="w-full border rounded px-2 py-1 text-black">
-      </div>
-
-      <div class="mb-3">
-        <label>Rôle</label>
-        <select name="role" class="w-full border rounded px-2 py-1 text-black">
-          <option value="admin">Administrateur</option>
-          <option value="serveur">Serveur</option>
-          <option value="cuisinier">Cuisinier</option>
-          <option value="comptable">Comptable</option>
+      <div class="mb-4">
+        <label class="block text-gray-300 text-sm label-admin mb-2">Rôle</label>
+        <select name="role" id="roleSelect" onchange="toggleNomEmail()" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin">
+          <option value="serveur">Serveur</option><option value="cuisinier">Cuisinier</option><option value="comptable">Comptable</option><option value="admin">Administrateur</option><option value="tablette">Tablette</option>
         </select>
       </div>
-
-      <button type="submit" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
-        Enregistrer
-      </button>
+      <div id="champsNomEmail">
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <input name="first_name" placeholder="Prénom" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin">
+          <input name="last_name" placeholder="Nom" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin">
+        </div>
+        <input type="email" name="email" placeholder="Email" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin mb-4">
+      </div>
+      <input type="password" name="password" placeholder="Mot de passe" required class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin mb-6">
+      <button type="submit" class="w-full bg-green-600 hover:bg-green-700 py-3 rounded-lg font-bold text-white">Créer</button>
     </form>
   </div>
 </div>
 
-<!-- ================= MODAL GERER TABLES / TABLETTES ================= -->
-<div id="modalGererTables" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-  <div class="bg-black rounded-lg p-6 w-3/4 max-h-[80vh] overflow-y-auto relative">
-    <button onclick="closeModal('modalGererTables')" class="absolute top-2 right-2 text-red-600 text-2xl">&times;</button>
-
-    <h2 class="text-2xl font-bold mb-4">Gérer les tables et tablettes</h2>
-
-    <!-- ===== FORMULAIRE UNIQUE POUR TABLE + TABLETTE ===== -->
-    <form method="POST" class="mb-6">
+<div id="modalModifierUser" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4">
+  <div class="bg-gray-800 border border-gray-700 p-7 rounded-2xl w-full max-w-lg relative modal-content-admin">
+    <button onclick="closeModal('modalModifierUser')" class="absolute top-5 right-5 text-gray-400 hover:text-white text-3xl">&times;</button>
+    <h2 class="text-gray-100 font-bold text-xl mb-6 modal-title">✏️ Modifier utilisateur</h2>
+    <form method="POST">
       {% csrf_token %}
-      <input type="hidden" name="ajouter_tablette">
-
-      <div class="mb-3">
-        <label>Numéro de table</label>
-        <input type="number" name="numero_table" required class="w-full border rounded px-2 py-1 text-black">
+      <input type="hidden" name="modifier_utilisateur">
+      <input type="hidden" name="user_id" id="modUser_id">
+      <div class="mb-4">
+        <label class="block text-gray-300 text-sm label-admin mb-2">Identifiant</label>
+        <input name="identifiant" id="modUser_identifiant" required class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin">
       </div>
-
-      <div class="mb-3">
-        <label>Nombre de places</label>
-        <input type="number" name="nombre_places" required class="w-full border rounded px-2 py-1 text-black">
+      <div class="mb-4">
+        <label class="block text-gray-300 text-sm label-admin mb-2">Rôle</label>
+        <select name="role" id="modUser_role" onchange="toggleModNomEmail()" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin">
+          <option value="serveur">Serveur</option><option value="cuisinier">Cuisinier</option><option value="comptable">Comptable</option><option value="admin">Administrateur</option><option value="tablette">Tablette</option>
+        </select>
       </div>
-
-      <div class="mb-3">
-        <label>Identifiant Tablette</label>
-        <input type="text" name="username_tablette" required class="w-full border rounded px-2 py-1 text-black">
+      <div id="modChampsNomEmail">
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <input name="first_name" id="modUser_first_name" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin">
+          <input name="last_name" id="modUser_last_name" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin">
+        </div>
+        <input type="email" name="email" id="modUser_email" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin mb-4">
       </div>
-
-      <div class="mb-3">
-        <label>Mot de passe Tablette</label>
-        <input type="password" name="password_tablette" required class="w-full border rounded px-2 py-1 text-black">
-      </div>
-
-      <div class="flex gap-2 mt-2">
-        <button type="submit" name="creer_tablette" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-          Créer et Lier
-        </button>
-        <button type="submit" name="activer_tablette" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-          Activer Tablette
-        </button>
-      </div>
+      <input type="password" name="password" placeholder="Laisser vide pour ne pas changer" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin mb-6">
+      <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 py-3 rounded-lg font-bold text-gray-900">Sauvegarder</button>
     </form>
-
-    <!-- ===== TABLE EXISTANTES ===== -->
-    <table class="w-full table-auto border-collapse">
-      <thead>
-        <tr>
-          <th class="border px-2 py-1">ID Table</th>
-          <th class="border px-2 py-1">Numéro</th>
-          <th class="border px-2 py-1">Tablette</th>
-          <th class="border px-2 py-1">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for t in tables %}
-        <tr>
-          <td class="border px-2 py-1">{{ t.id }}</td>
-          <td class="border px-2 py-1">{{ t.numero }}</td>
-          <td class="border px-2 py-1">
-            {% if t.user_tablette %}
-              {{ t.user_tablette.username }}
-            {% else %}
-              -
-            {% endif %}
-          </td>
-          <td class="border px-2 py-1">
-            <form method="POST" class="flex gap-1">
-              {% csrf_token %}
-              <input type="hidden" name="table_id" value="{{ t.id }}">
-              <button type="submit" name="supprimer_table" class="bg-red-600 text-white px-2 py-1 rounded">
-                Supprimer
-              </button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
   </div>
 </div>
-{% endif%}
-<!-- ================= JS POUR MODAL ================= -->
+
+<div id="modalAjouterTable" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4">
+  <div class="bg-gray-800 border border-gray-700 p-7 rounded-2xl w-full max-w-lg relative modal-content-admin">
+    <button onclick="closeModal('modalAjouterTable')" class="absolute top-5 right-5 text-gray-400 hover:text-white text-3xl">&times;</button>
+    <h2 class="text-gray-100 font-bold text-xl mb-6 modal-title">🪑 Nouvelle Table + Tablette</h2>
+    <form method="POST">
+      {% csrf_token %}
+      <div class="bg-gray-900 rounded-lg p-4 mb-4 sub-card">
+        <input name="numero_table" placeholder="Numéro table" required type="number" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin mb-3">
+        <input name="nombre_places" placeholder="Nombre places" required type="number" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin">
+      </div>
+      <div class="bg-gray-900 rounded-lg p-4 mb-6 sub-card">
+        <input name="identifiant_tablette" placeholder="ID Tablette" required class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin mb-3">
+        <input type="password" name="password_tablette" placeholder="MDP Tablette" required class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin">
+      </div>
+      <button type="submit" name="creer_tablette" class="w-full bg-green-600 hover:bg-green-700 py-3 rounded-lg font-bold text-white">Créer Tout</button>
+    </form>
+  </div>
+</div>
+
+<div id="modalConfirmSuppr" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[100] px-4">
+  <div class="bg-gray-800 border border-gray-700 p-8 rounded-2xl w-full max-w-sm relative shadow-2xl modal-content-admin text-center">
+    <div class="text-red-500 text-6xl mb-4">⚠️</div>
+    <h3 class="text-xl font-bold text-white mb-2 modal-title">Confirmation</h3>
+    <p class="text-gray-400 mb-8 admin-subtitle">Voulez-vous vraiment supprimer cet élément ? Cette action est définitive.</p>
+    <div class="flex gap-4">
+      <button onclick="closeModal('modalConfirmSuppr')" class="flex-1 px-4 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition btn-edit">Annuler</button>
+      <button id="btnConfirmDelete" class="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* --- ADAPTATION MODE CLAIR --- */
+  body.light-mode .admin-title { color: #b45309 !important; }
+  body.light-mode .admin-subtitle { color: #4b5563 !important; }
+  body.light-mode .section-title { color: #1f2937 !important; }
+  body.light-mode .card-admin, body.light-mode .dropdown-admin, body.light-mode .modal-content-admin {
+    background-color: #ffffff !important; border-color: #e5e7eb !important; color: #1f2937 !important;
+  }
+  body.light-mode .user-id-text, body.light-mode .modal-title, body.light-mode .info-text { color: #111827 !important; }
+  body.light-mode .sub-card { background-color: #f3f4f6 !important; }
+  body.light-mode .btn-dropdown-text { color: #374151 !important; }
+  body.light-mode .btn-dropdown-text:hover { background-color: #f3f4f6 !important; }
+  body.light-mode .btn-edit { background-color: #e5e7eb !important; color: #1f2937 !important; }
+  body.light-mode .input-admin { background-color: #ffffff !important; border-color: #d1d5db !important; color: #111827 !important; }
+  body.light-mode .label-admin { color: #374151 !important; }
+</style>
+
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script>
-function openModal(id) {
-  document.getElementById(id).classList.remove('hidden');
-  document.getElementById(id).classList.add('flex');
+let formToSubmit = null;
+
+function openModal(id) { document.getElementById(id).classList.remove("hidden"); }
+function closeModal(id) { document.getElementById(id).classList.add("hidden"); }
+
+// Gestion des champs Nom/Email
+function toggleNomEmail() {
+  const role = document.getElementById("roleSelect").value;
+  document.getElementById("champsNomEmail").style.display = (role === "tablette") ? "none" : "block";
 }
-function closeModal(id) {
-  document.getElementById(id).classList.add('hidden');
-  document.getElementById(id).classList.remove('flex');
+function toggleModNomEmail() {
+  const role = document.getElementById("modUser_role").value;
+  document.getElementById("modChampsNomEmail").style.display = (role === "tablette") ? "none" : "block";
 }
+
+// Pré-remplissage modification
+function openModifierUser(id, ident, fn, ln, em, role) {
+  document.getElementById("modUser_id").value = id;
+  document.getElementById("modUser_identifiant").value = ident;
+  document.getElementById("modUser_first_name").value = (fn === "None" || !fn) ? "" : fn;
+  document.getElementById("modUser_last_name").value = (ln === "None" || !ln) ? "" : ln;
+  document.getElementById("modUser_email").value = (em === "None" || !em) ? "" : em;
+  document.getElementById("modUser_role").value = role;
+  toggleModNomEmail();
+  openModal("modalModifierUser");
+}
+
+// Logique de confirmation de suppression
+function askConfirmDelete(formId) {
+  formToSubmit = document.getElementById(formId);
+  openModal('modalConfirmSuppr');
+}
+
+document.getElementById('btnConfirmDelete').addEventListener('click', function() {
+  if (formToSubmit) formToSubmit.submit();
+});
+
+// Fermeture au clic extérieur
+document.addEventListener('click', function(e) {
+  ['modalAjouterUser', 'modalModifierUser', 'modalAjouterTable', 'modalConfirmSuppr'].forEach(id => {
+    let m = document.getElementById(id);
+    if (e.target === m) closeModal(id);
+  });
+});
+
+document.addEventListener("DOMContentLoaded", function() { toggleNomEmail(); });
 </script>
-
-
+<script>
+  setTimeout(() => {
+    document.querySelectorAll('.flash-message').forEach(msg => {
+      msg.style.transition = 'opacity 0.5s ease';
+      msg.style.opacity = '0';
+      setTimeout(() => msg.remove(), 500);
+    });
+  }, 10000); // 3 secondes
+</script>
 {% endblock %}
-
-

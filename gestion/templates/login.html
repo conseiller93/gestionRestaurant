@@ -2,66 +2,78 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Connexion</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion — Système Restaurant</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-black min-h-screen flex items-center justify-center">
+<body class="bg-black min-h-screen flex items-center justify-center p-4">
 
-<div class="bg-zinc-900 p-8 rounded-xl shadow-lg w-full max-w-md">
-    <h2 class="text-white text-2xl font-bold text-center mb-6">
-        Connexion sécurisée
-    </h2>
+<div class="bg-zinc-900 p-8 rounded-xl shadow-2xl w-full max-w-md border border-zinc-800">
+    <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-600/10 border border-indigo-500/20 mb-4">
+            <span class="text-2xl">🔐</span>
+        </div>
+        <h2 class="text-white text-2xl font-black tracking-tight">
+            Connexion sécurisée
+        </h2>
+        <p class="text-zinc-500 text-sm mt-1">Accès réservé aux membres du personnel</p>
+    </div>
 
     {% if messages %}
-        {% for message in messages %}
-            <p class="text-red-500 text-sm text-center mb-3">{{ message }}</p>
-        {% endfor %}
+        <div class="mb-4">
+            {% for message in messages %}
+                <p class="text-red-500 text-sm text-center bg-red-500/10 py-2 rounded border border-red-500/20">
+                    {{ message }}
+                </p>
+            {% endfor %}
+        </div>
     {% endif %}
 
-  <form method="post" action="{% url 'login' %}" class="space-y-4">
-    {% csrf_token %}
-
-    <!-- Identifiant -->
-    <div>
-        <label for="identifiant" class="block text-lg font-semibold mb-1 text-white">
-            Identifiant
-        </label>
-        <input type="text" id="identifiant" name="identifiant" required
-               placeholder="Entrez votre identifiant"
-               class="w-full px-4 py-3 rounded bg-zinc-800 text-white border border-zinc-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-               value="{{ identifiant|default:'' }}">
-    </div>
-
-    <!-- Mot de passe -->
-    <div>
-        <label for="password" class="block text-lg font-semibold mb-1 text-white">
-            Clé d'accès
-        </label>
-        <input type="password" id="password" name="password" required
-               placeholder="Entrez votre mot de passe"
-               class="w-full px-4 py-3 rounded bg-zinc-800 text-white border border-zinc-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-    </div>
-
-    <!-- Bouton -->
-    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded font-semibold">
-     Se connecter
-   </button>
-
-    <!-- Erreur -->
     {% if error %}
-        <p class="text-red-500 text-center font-medium mt-2">{{ error }}</p>
+        <div class="mb-4">
+            <p class="text-red-500 text-sm text-center bg-red-500/10 py-2 rounded border border-red-500/20 font-medium">
+                {{ error }}
+            </p>
+        </div>
     {% endif %}
-</form>
 
+    <form method="post" action="{% url 'login' %}" class="space-y-5">
+        {% csrf_token %}
 
+        <div>
+            <label for="identifiant" class="block text-sm font-bold mb-2 text-zinc-400 uppercase tracking-widest">
+                Identifiant
+            </label>
+            <input type="text" id="identifiant" name="identifiant" required
+                   placeholder="Ex: TABLE_01"
+                   class="w-full px-4 py-3 rounded-lg bg-zinc-800 text-white border border-zinc-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:outline-none transition-all"
+                   value="{{ initial_identifiant|default:identifiant|default:'' }}">
+        </div>
 
-    <p class="text-xs text-zinc-500 text-center mt-4">
-        Accès réservé • Système sécurisé
-    </p>
+        <div>
+            <label for="password" class="block text-sm font-bold mb-2 text-zinc-400 uppercase tracking-widest">
+                Clé d'accès
+            </label>
+            <input type="password" id="password" name="password" required
+                   placeholder="••••••••"
+                   class="w-full px-4 py-3 rounded-lg bg-zinc-800 text-white border border-zinc-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:outline-none transition-all"
+                   value="{{ initial_password }}">
+        </div>
+
+        <div class="pt-2">
+            <button type="submit" 
+                    class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-lg font-bold shadow-lg shadow-indigo-900/20 transition-all active:scale-[0.98] uppercase tracking-wider text-sm {% if initial_identifiant %}animate-pulse{% endif %}">
+                Se connecter
+            </button>
+        </div>
+    </form>
+
+    <div class="mt-8 border-t border-zinc-800 pt-6 text-center">
+        <p class="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-medium">
+            Propriété de MDD — v2.0
+        </p>
+    </div>
 </div>
 
 </body>
 </html>
-
-
-

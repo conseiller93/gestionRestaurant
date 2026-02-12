@@ -1,186 +1,212 @@
 {% extends 'base.html' %}
 
-{% block navbar %}
-    {# Inclut la barre de navigation depuis un fichier séparé #}
-    {% include "navbar.html" %}
-{% endblock %}
-
-{% block title %}Menu du Restaurant{% endblock %}
-
 {% block content %}
-<div class="max-w-6xl mx-auto px-4 py-6">
+<div class="w-full min-h-screen px-6 py-6" x-data="{ loading: false }">
+    <h1 class="text-3xl font-bold text-center mb-8 text-gray-200 italic tracking-tighter">
+        <span class="text-yellow-500">🍽️</span> MENU DU RESTAURANT
+    </h1>
 
-  {# TITRE PRINCIPAL #}
-  <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">
-    🍽️ Menu du Restaurant
-  </h1>
-  {% if user.role == 'admin' %}
-  <div class="flex justify-end mb-4">
-    <button onclick="openModal()"
-            class="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition">
-        ➕ Ajouter
-    </button>
-</div>
+    {# --- ZONE ACTION ADMIN (AJOUT) --- #}
+    {% if user.role == 'admin' %}
+    <div class="flex justify-end mb-8">
+        <button onclick="openModal()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-2xl shadow-lg shadow-green-900/20 transition-all active:scale-95 flex items-center gap-2">
+            <span class="text-xl">+</span> Nouveau Plat
+        </button>
+    </div>
     {% endif %}
 
-  {# GRILLE DES PLATS #}
-  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-    {% for plat in plats %}
-      <div class="bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden">
+    {# --- GRILLE DES PLATS --- #}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        {% for plat in plats %}
+        <div class="group bg-gray-800/40 border border-white/10 rounded-3xl overflow-hidden shadow-2xl hover:border-blue-500/50 transition-all duration-300">
+            
+            {# IMAGE #}
+            <div class="relative h-48 overflow-hidden">
+                {% if plat.image %}
+                    <img src="{{ plat.image.url }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                {% else %}
+                    <div class="w-full h-full bg-gray-700 flex flex-col items-center justify-center text-gray-500">
+                        <span class="text-4xl">🥘</span>
+                        <p class="text-xs mt-2 uppercase font-bold tracking-widest">Image non disponible</p>
+                    </div>
+                {% endif %}
+                <div class="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
+                    <p class="text-green-400 font-black text-sm">{{ plat.prix_unitaire }} FG</p>
+                </div>
+            </div>
 
-        {# IMAGE DU PLAT #}
-        {% if plat.image %}
-          <img src="{{ plat.image.url }}" alt="{{ plat.nom }}" class="w-full h-40 object-cover">
-        {% else %}
-          <div class="w-full h-40 bg-gray-200 flex items-center justify-center text-gray-400">
-            Pas d’image
-          </div>
-        {% endif %}
+            {# INFOS PLAT #}
+            <div class="p-6">
+                <h2 class="text-xl font-bold text-white mb-2 truncate">{{ plat.nom }}</h2>
+                
+                <div class="mb-4">
+                    {% if plat.quantite_disponible > 0 %}
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+                            <p class="text-blue-400 text-xs font-bold uppercase tracking-widest">En stock : {{ plat.quantite_disponible }}</p>
+                        </div>
+                    {% else %}
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                            <p class="text-red-500 text-xs font-bold uppercase tracking-widest">Rupture de stock</p>
+                        </div>
+                    {% endif %}
+                </div>
 
-        {# INFORMATIONS DU PLAT (Nom et Prix) #}
-        <div class="p-4 text-center">
-          <h2 class="text-lg font-semibold text-gray-800">{{ plat.nom }}</h2>
-          <p class="text-green-600 font-bold text-xl mt-2">{{ plat.prix_unitaire }} FG</p>
+                {# --- ZONE COMMANDE (TABLETTE & ADMIN) --- #}
+                {% if user.role == 'tablette' or user.role == 'admin' %}
+                    {% if plat.quantite_disponible > 0 %}
+                        <form method="POST" action="{% url 'ajouter_au_panier' plat.id %}" @submit="loading = true" class="space-y-3">
+                            {% csrf_token %}
+                            <div class="flex items-center bg-gray-900 rounded-xl border border-gray-700 p-1">
+                                <label class="px-3 text-gray-500 text-xs font-bold">QTE</label>
+                                <input type="number" name="quantite" value="1" min="1" max="{{ plat.quantite_disponible }}" 
+                                       class="flex-1 bg-transparent text-white font-bold focus:outline-none text-center">
+                            </div>
+                            <button type="submit" 
+                                    class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-lg shadow-blue-600/20 active:scale-95">
+                                🛒 Commander
+                            </button>
+                        </form>
+                    {% else %}
+                        <button disabled class="w-full bg-gray-700/50 text-gray-500 py-3 rounded-xl font-bold cursor-not-allowed">
+                            ÉPUISÉ
+                        </button>
+                    {% endif %}
+                {% endif %}
 
-          <form method="POST" action="{% url 'ajouter_au_panier' plat.id %}">
-            {% csrf_token %}
-           <input type="number" name="quantite" value="1" min="1" max="10" class="w-16 text-black px-1 py-0.5 rounded">
-           <button type="submit"
-          class="mt-2 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">
-           Ajouter au panier
-         </button>
-           </form>
+                {# --- ZONE GESTION (ADMIN & CUISINIER) --- #}
+                <div class="mt-6 pt-4 border-t border-white/5 flex flex-col gap-2">
+                    {% if user.role == 'admin' or user.role == 'cuisinier' %}
+                        <button onclick="openModifyModal({{ plat.id }}, '{{ plat.nom|escapejs }}', {{ plat.prix_unitaire }}, {{ plat.quantite_disponible }})"
+                                class="w-full bg-yellow-500/10 hover:bg-yellow-500 text-yellow-500 hover:text-black py-2 rounded-xl text-sm font-bold transition-all border border-yellow-500/20">
+                            ✏️ Modifier
+                        </button>
+                    {% endif %}
 
-
-          {% if user.is_authenticated %}
-
-            {# BOUTONS AJOUTER ET MODIFIER POUR ADMIN ET CUISINIER #}
-            {% if user.role == 'admin' or user.role == 'cuisinier' %}
-              <button onclick="openModifyModal({{ plat.id }}, '{{ plat.nom }}', {{ plat.prix_unitaire }})"
-                      class="mt-2 w-full bg-yellow-500 text-white py-2 rounded-lg hover:bg-yellow-600 transition">
-                ✏️ Modifier
-              </button>
-            {% endif %}
-
-            {# BOUTON SUPPRIMER POUR ADMIN UNIQUEMENT #}
-            {% if user.role == 'admin' %}
-              <button onclick="openDeleteModal({{ plat.id }}, '{{ plat.nom }}')"
-                      class="mt-2 w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition">
-                🗑️ Supprimer
-              </button>
-            {% endif %}
-          {% endif %}
-         
-
+                    {% if user.role == 'admin' %}
+                        <button onclick="openDeleteModal({{ plat.id }}, '{{ plat.nom|escapejs }}')"
+                                class="w-full bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white py-2 rounded-xl text-sm font-bold transition-all border border-red-600/20">
+                            🗑️ Supprimer
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-      </div>
-      
-    {% empty %}
-      {# Message si aucun plat n'est disponible #}
-      <p class="col-span-full text-center text-gray-500">
-        Aucun plat disponible pour le moment.
-      </p>
-    {% endfor %}
-  </div>
-
-  {# AFFICHAGE DU NOMBRE DE PLATS #}
-  <p class="mt-4">Nombre de plats : {{ plats|length }}</p>
+        {% empty %}
+            <div class="col-span-full py-20 text-center bg-gray-800/20 rounded-3xl border border-dashed border-gray-700">
+                <p class="text-gray-500 font-bold italic">La carte est vide actuellement.</p>
+            </div>
+        {% endfor %}
+    </div>
 </div>
 
-{# ===================== MODAL AJOUT ===================== #}
-<div id="modalAjout" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center">
-  <div class="bg-black rounded-lg p-6 w-96">
-    {# Bouton pour fermer le modal #}
-    <button onclick="closeModal()" class="float-right text-red-600 font-bold">&times;</button>
-    <h2 class="text-xl font-bold mb-4">Ajouter un plat</h2>
-    <form method="POST" enctype="multipart/form-data" action="{% url 'ajouter_plat' %}">
-      {% csrf_token %}
-      <div class="mb-3">
-        <label class="block text-sm font-medium">Nom</label>
-        <input type="text" name="nom" class="w-full border rounded-lg px-3 py-2" required>
-      </div>
-      <div class="mb-3">
-        <label class="block text-sm font-medium">Prix</label>
-        <input type="number" name="prix_unitaire" class="w-full border rounded-lg px-3 py-2" required>
-      </div>
-      <div class="mb-3">
-        <label class="block text-sm font-medium">Image</label>
-        <input type="file" name="image" class="w-full border rounded-lg px-3 py-2">
-      </div>
-      <button type="submit" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
-        Enregistrer
-      </button>
-    </form>
-  </div>
+{# --- MODAL : AJOUT --- #}
+<div id="modalAjout" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+    <div class="bg-gray-900 border border-white/10 p-8 rounded-3xl w-full max-w-md shadow-2xl shadow-black">
+        <h2 class="text-white text-2xl font-black mb-6 italic">CRÉER UN PLAT</h2>
+        <form method="POST" enctype="multipart/form-data" action="{% url 'ajouter_plat' %}">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <div>
+                    <label class="text-gray-500 text-[10px] font-black uppercase tracking-widest ml-1">Nom du produit</label>
+                    <input type="text" name="nom" required class="w-full p-4 bg-gray-800 text-white rounded-2xl border border-gray-700 focus:border-green-500 outline-none transition">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-gray-500 text-[10px] font-black uppercase tracking-widest ml-1">Prix (FG)</label>
+                        <input type="number" name="prix_unitaire" required class="w-full p-4 bg-gray-800 text-white rounded-2xl border border-gray-700 focus:border-green-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="text-gray-500 text-[10px] font-black uppercase tracking-widest ml-1">Stock</label>
+                        <input type="number" name="quantite_disponible" value="1" min="0" required class="w-full p-4 bg-gray-800 text-white rounded-2xl border border-gray-700 focus:border-green-500 outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-gray-500 text-[10px] font-black uppercase tracking-widest ml-1 text-center block mb-2">Image cover</label>
+                    <input type="file" name="image" class="w-full text-gray-400 text-xs bg-gray-800 p-4 rounded-2xl border border-dashed border-gray-700">
+                </div>
+            </div>
+            <div class="mt-8 flex flex-col gap-3">
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-500 py-4 rounded-2xl text-white font-black transition-all shadow-xl shadow-green-600/20">ENREGISTRER</button>
+                <button type="button" onclick="closeModal()" class="text-gray-500 font-bold py-2">ANNULER</button>
+            </div>
+        </form>
+    </div>
 </div>
 
-{# ===================== MODAL MODIFIER ===================== #}
-<div id="modalModify" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center">
-  <div class="bg-black rounded-lg p-6 w-96">
-    <button onclick="closeModifyModal()" class="float-right text-red-600 font-bold">&times;</button>
-    <h2 class="text-xl font-bold mb-4">Modifier le plat</h2>
-    <form id="modifyForm" method="POST" enctype="multipart/form-data">
-      {% csrf_token %}
-      <div class="mb-3">
-        <label class="block text-sm font-medium">Nom</label>
-        <input type="text" name="nom" id="modifyNom" class="w-full border rounded-lg px-3 py-2" required>
-      </div>
-      <div class="mb-3">
-        <label class="block text-sm font-medium">Prix</label>
-        <input type="number" name="prix_unitaire" id="modifyPrix" class="w-full border rounded-lg px-3 py-2" required>
-      </div>
-      <div class="mb-3">
-        <label class="block text-sm font-medium">Image</label>
-        <input type="file" name="image" class="w-full border rounded-lg px-3 py-2">
-      </div>
-      <button type="submit" class="w-full bg-yellow-500 text-white py-2 rounded-lg hover:bg-yellow-600">
-        Modifier
-      </button>
-    </form>
-  </div>
+{# --- MODAL : MODIFIER --- #}
+<div id="modalModify" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+    <div class="bg-gray-900 border border-white/10 p-8 rounded-3xl w-full max-w-md">
+        <h2 class="text-white text-2xl font-black mb-6 italic">MODIFICATION</h2>
+        <form id="modifyForm" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <input id="modifyNom" name="nom" type="text" class="w-full p-4 bg-gray-800 text-white rounded-2xl border border-gray-700" placeholder="Nom">
+                <input id="modifyPrix" name="prix_unitaire" type="number" class="w-full p-4 bg-gray-800 text-white rounded-2xl border border-gray-700" placeholder="Prix">
+                <input id="modifyQuantite" name="quantite_disponible" type="number" class="w-full p-4 bg-gray-800 text-white rounded-2xl border border-gray-700" placeholder="Stock">
+            </div>
+            <div class="mt-8 flex flex-col gap-3">
+                <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-400 py-4 rounded-2xl text-black font-black transition-all">METTRE À JOUR</button>
+                <button type="button" onclick="closeModifyModal()" class="text-gray-500 font-bold py-2">ANNULER</button>
+            </div>
+        </form>
+    </div>
 </div>
 
-{# ===================== MODAL SUPPRIMER ===================== #}
-<div id="modalDelete" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center">
-  <div class="bg-black rounded-lg p-6 w-96 text-center">
-    <h2 class="text-xl font-bold mb-4">Confirmer la suppression</h2>
-    <p id="deletePlatName" class="mb-4"></p>
-    <form id="deleteForm" method="POST">
-      {% csrf_token %}
-      <button type="submit" class="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition">
-        Supprimer
-      </button>
-      <button type="button" onclick="closeDeleteModal()"
-              class="mt-2 w-full bg-gray-400 text-white py-2 rounded-lg hover:bg-gray-500 transition">
-        Annuler
-      </button>
-    </form>
-  </div>
+{# --- MODAL : SUPPRESSION --- #}
+<div id="modalDelete" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[100] p-4">
+    <div class="bg-gray-900 p-8 rounded-3xl w-full max-w-sm text-center border border-red-500/30">
+        <div class="text-red-500 text-6xl mb-4">⚠️</div>
+        <h2 class="text-white text-xl font-black mb-2 uppercase tracking-tighter">Suppression ?</h2>
+        <p id="deletePlatName" class="text-gray-400 mb-8 text-sm italic"></p>
+        <form id="deleteForm" method="POST">
+            {% csrf_token %}
+            <button type="submit" class="w-full bg-red-600 hover:bg-red-500 py-4 rounded-2xl text-white font-black transition-all mb-3">DÉTRUIRE DÉFINITIVEMENT</button>
+            <button type="button" onclick="closeDeleteModal()" class="text-gray-500 font-bold">CONSERVER</button>
+        </form>
+    </div>
+</div>
+{# --- BOUTON PANIER FLOTTANT --- #}
+<div class="fixed bottom-8 right-8 z-[100]">
+    <a href="{% url 'tablette_index' %}" class="flex items-center gap-4 bg-yellow-500 hover:bg-yellow-400 p-3 pr-8 rounded-full shadow-[0_15px_30px_rgba(0,0,0,0.4)] transition-all hover:scale-105 active:scale-95 group">
+        <div class="w-14 h-14 bg-black rounded-full flex items-center justify-center text-2xl shadow-inner relative">
+            🛒
+            {# Badge de notification si le panier n'est pas vide #}
+            {% if panier_items.count > 0 %}
+                <span class="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-yellow-500">
+                    {{ panier_items.count }}
+                </span>
+            {% endif %}
+        </div>
+        <div class="flex flex-col">
+            <span class="text-black text-[10px] font-black uppercase tracking-widest opacity-60">Ma commande</span>
+            <span class="text-black font-black text-lg">VOIR LE DÉTAIL</span>
+        </div>
+    </a>
 </div>
 
-{# ===================== SCRIPTS JS ===================== #}
 <script>
-  // Modal Ajouter
-  function openModal() { document.getElementById('modalAjout').classList.remove('hidden'); }
-  function closeModal() { document.getElementById('modalAjout').classList.add('hidden'); }
+    // Ajout
+    function openModal(){ document.getElementById('modalAjout').classList.remove('hidden'); }
+    function closeModal(){ document.getElementById('modalAjout').classList.add('hidden'); }
 
-  // Modal Modifier
-  function openModifyModal(platId, platName, platPrix) {
-    document.getElementById('modalModify').classList.remove('hidden');
-    document.getElementById('modifyNom').value = platName;
-    document.getElementById('modifyPrix').value = platPrix;
-    document.getElementById('modifyForm').action = "/plat/modifier/" + platId + "/";
-  }
-  function closeModifyModal() { document.getElementById('modalModify').classList.add('hidden'); }
+    // Modification
+    function openModifyModal(id, nom, prix, quantite) {
+        document.getElementById('modalModify').classList.remove('hidden');
+        document.getElementById('modifyNom').value = nom;
+        document.getElementById('modifyPrix').value = prix;
+        document.getElementById('modifyQuantite').value = quantite;
+        document.getElementById('modifyForm').action = "/plat/modifier/" + id + "/";
+    }
+    function closeModifyModal(){ document.getElementById('modalModify').classList.add('hidden'); }
 
-  // Modal Supprimer
-  function openDeleteModal(platId, platName) {
-    document.getElementById('modalDelete').classList.remove('hidden');
-    document.getElementById('deletePlatName').innerText = "Voulez-vous vraiment supprimer : " + platName + " ?";
-    document.getElementById('deleteForm').action = "/plat/supprimer/" + platId + "/";
-  }
-  function closeDeleteModal() { document.getElementById('modalDelete').classList.add('hidden'); }
+    // Suppression
+    function openDeleteModal(id, nom) {
+        document.getElementById('modalDelete').classList.remove('hidden');
+        document.getElementById('deletePlatName').innerText = 'Action irréversible sur : ' + nom;
+        document.getElementById('deleteForm').action = "/plat/supprimer/" + id + "/";
+    }
+    function closeDeleteModal(){ document.getElementById('modalDelete').classList.add('hidden'); }
 </script>
-
 {% endblock %}
-

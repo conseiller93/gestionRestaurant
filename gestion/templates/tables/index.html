@@ -1,54 +1,78 @@
 {% extends 'base.html' %}
-{% block navbar %}
-    {% include "navbar.html" %}
-{% endblock %}
-{% block title %}Tables du restaurant{% endblock %}
 
 {% block content %}
+<div class="min-h-screen bg-[#070b14] text-gray-100 p-8 font-sans">
+    
+    <header class="mb-12">
+        <h1 class="text-5xl font-black tracking-tight mb-2 italic">GESTION <span class="text-green-500">SALLE</span></h1>
+        <p class="text-gray-500 font-medium tracking-wide">État des terminaux et des tables de l'établissement.</p>
+    </header>
 
-<h1 class="text-3xl font-bold mb-6">Gestion des tables</h1>
+    <section class="mb-16">
+        <h2 class="text-xl font-black text-blue-400 mb-8 flex items-center gap-3">
+            <span class="p-2 bg-blue-500/20 rounded-xl text-sm">📱</span> TABLES CONNECTÉES
+        </h2>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {% for table in tables %}
+                {# ICI : Django utilise la relation OneToOne inverse #}
+                {% if table.tablette %}
+                <div class="bg-gray-900/40 border-2 {% if table.is_occupied %}border-red-500/40 shadow-[0_10px_30px_rgba(239,68,68,0.15)]{% else %}border-blue-500/40{% endif %} rounded-[3rem] p-8 transition-all hover:scale-[1.02] duration-300">
+                    <div class="flex justify-between items-start mb-6">
+                        <h3 class="text-5xl font-black italic tracking-tighter">T-{{ table.numero_table }}</h3>
+                        <div class="bg-blue-500/20 text-blue-400 p-2 rounded-xl">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        </div>
+                    </div>
 
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <div class="space-y-4 mb-8">
+                        <div class="bg-black/40 rounded-2xl p-4 border border-white/5">
+                            <p class="text-[9px] text-gray-500 font-black uppercase mb-1">Identifiant Tablette</p>
+                            <p class="text-lg font-black text-white italic">@{{ table.tablette.user.identifiant }}</p>
+                        </div>
+                        <p class="text-sm font-bold text-gray-400 ml-2">{{ table.nombre_places }} Couverts</p>
+                    </div>
 
-    {% for table in tables %}
-        <div class="bg-white shadow rounded-lg p-5 border
-            {% if table.is_occupied %}
-                border-red-500
-            {% else %}
-                border-green-500
-            {% endif %}
-        ">
-            <h2 class="text-xl font-semibold mb-2">
-                Table {{ table.numero_table }}
-            </h2>
-
-            <p class="text-gray-600 mb-1">
-                Places : {{ table.nombre_places }}
-            </p>
-
-            <p class="font-semibold mb-3">
-                Statut :
-                {% if table.is_occupied %}
-                    <span class="text-red-600">Occupée</span>
-                {% else %}
-                    <span class="text-green-600">Libre</span>
+                    <div class="flex items-center gap-3 bg-black/20 rounded-full px-5 py-3 w-fit">
+                        <div class="w-2.5 h-2.5 rounded-full {% if table.is_occupied %}bg-red-500 animate-pulse{% else %}bg-green-500{% endif %}"></div>
+                        <span class="text-xs font-black uppercase tracking-widest {% if table.is_occupied %}text-red-400{% else %}text-green-400{% endif %}">
+                            {% if table.is_occupied %}Table Occupée{% else %}Table Libre{% endif %}
+                        </span>
+                    </div>
+                </div>
                 {% endif %}
-            </p>
-
-            {% if table.utilisateur %}
-                <p class="text-sm text-gray-500">
-                    Tablette : {{ table.utilisateur.identifiant }}
-                </p>
-            {% else %}
-                <p class="text-sm text-gray-400 italic">
-                    Aucune tablette assignée
-                </p>
-            {% endif %}
+            {% endfor %}
         </div>
-    {% empty %}
-        <p>Aucune table enregistrée.</p>
-    {% endfor %}
+    </section>
+
+    <section>
+        <h2 class="text-xl font-black text-gray-600 mb-8 flex items-center gap-3">
+            <span class="p-2 bg-gray-800 rounded-xl text-sm">🪑</span> TABLES EN ATTENTE D'ASSIGNATION
+        </h2>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
+            {% for table in tables %}
+                {% if not table.tablette %}
+                <div class="bg-gray-900/20 border-2 border-dashed border-white/5 rounded-[2.5rem] p-6 group hover:border-gray-500 transition-all">
+                    <h3 class="text-2xl font-black text-gray-600 mb-2">T-{{ table.numero_table }}</h3>
+                    <p class="text-[10px] text-gray-500 font-bold uppercase mb-4 italic">{{ table.nombre_places }} Places</p>
+                    <span class="text-[10px] font-black text-gray-700 bg-white/5 px-4 py-2 rounded-full uppercase">Hors ligne</span>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </section>
 
 </div>
 
+<style>
+    /* Pour un effet fluide au chargement */
+    .grid > div {
+        animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
 {% endblock %}

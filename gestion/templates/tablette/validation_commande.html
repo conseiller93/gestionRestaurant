@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}Commande validée{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8">
+
+  <!-- Bandeau vert : succès -->
+  <div class="bg-green-700 text-white rounded-xl p-6 text-center mb-6">
+    <h1 class="text-3xl font-bold mb-1">✅ Commande validée</h1>
+    <p class="text-green-200">Votre commande a bien été enregistrée.</p>
+  </div>
+
+  <!-- Récapitulatif -->
+  <div class="bg-gray-800 rounded-xl shadow p-6">
+    <h2 class="text-xl font-semibold text-yellow-400 mb-4">Récapitulatif</h2>
+
+    <div class="space-y-2 text-gray-300 mb-4">
+      <p><strong>Commande n° :</strong> {{ commande.id }}</p>
+      <p><strong>Table :</strong> {{ commande.tablette.table.numero_table }}</p>
+      <p><strong>Date :</strong> {{ commande.date|date:"d/m/Y H:i" }}</p>
+      <p><strong>Statut :</strong>
+        <span class="bg-yellow-500 text-gray-900 px-2 py-0.5 rounded-full text-sm font-semibold">
+          En attente
+        </span>
+      </p>
+    </div>
+
+    <!-- Items de la commande -->
+    <h3 class="text-lg font-semibold text-gray-200 mb-3">Plats commandés</h3>
+    <div class="bg-gray-900 rounded-lg overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-gray-400 border-b border-gray-700">
+            <th class="text-left px-4 py-2">Plat</th>
+            <th class="text-center px-4 py-2">Qté</th>
+            <th class="text-right px-4 py-2">Prix u.</th>
+            <th class="text-right px-4 py-2">Montant</th>
+          </tr>
+        </thead>
+        <tbody class="text-gray-200">
+          {% for item in commande.items.all %}
+          <tr class="border-b border-gray-800">
+            <td class="px-4 py-2">{{ item.plat.nom }}</td>
+            <td class="px-4 py-2 text-center">{{ item.quantite }}</td>
+            <td class="px-4 py-2 text-right">{{ item.prix_unitaire }} FG</td>
+            <td class="px-4 py-2 text-right text-yellow-400 font-semibold">{{ item.montant }} FG</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Total -->
+    <div class="mt-4 flex justify-end">
+      <span class="text-xl text-yellow-400 font-bold">Total : {{ commande.total }} FG</span>
+    </div>
+  </div>
+
+  <!-- Bouton retour -->
+  <div class="mt-6 text-center">
+    <a href="{% url 'tablette_index' %}"
+       class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition">
+      ← Retour à la tablette
+    </a>
+  </div>
+
+</div>
+{% endblock %}

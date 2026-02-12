@@ -7,22 +7,75 @@
     {% load static %}
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+    /* Transition fluide pour tout le site */
+    body {
+        transition: background-color 0.3s, color 0.3s;
+    }
+
+    /* Styles généraux pour le mode clair */
+    body.light-mode {
+        background-color: #f3f4f6; /* Gris très clair */
+        color: #1f2937;           /* Texte sombre */
+    }
+
+    /* --- Barre Latérale (Aside) en mode clair --- */
+    body.light-mode aside {
+        background-color: #ffffff !important;
+        color: #1f2937;
+        border-right: 1px solid #e5e7eb;
+    }
+    
+    body.light-mode aside nav a {
+        color: #4b5563;
+    }
+
+    body.light-mode aside nav a:hover {
+        color: #ffffff; /* Le texte redevient blanc quand le fond devient bleu au survol */
+    }
+
+    /* --- Footer en mode clair (Adaptation) --- */
+    body.light-mode footer {
+        background-color: #ffffff !important;
+        color: #374151 !important;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    /* On fonce le jaune des étiquettes (Heure, Date, etc.) pour la lisibilité sur fond blanc */
+    body.light-mode footer .text-yellow-400 {
+        color: #b45309 !important; /* Un orange/ambre foncé plus lisible */
+    }
+
+    /* Les textes de contenu du footer (horloge, date, météo) */
+    body.light-mode footer #clock, 
+    body.light-mode footer #date, 
+    body.light-mode footer #location-name, 
+    body.light-mode footer #weather {
+        color: #1f2937 !important;
+    }
+
+    /* Le petit texte de copyright tout en bas */
+    body.light-mode footer .text-gray-500 {
+        color: #6b7280 !important;
+    }
+</style>
+  
 </head>
 
-<body class="bg-gray-900 text-gray-100 min-h-screen font-[Inter]">
+<body class="bg-gray-900 text-gray-100 min-h-screen font-[Inter]" x-data="{ mobileMenuOpen: false }">
+   
 
-<div class="flex min-h-screen">
+<div class="flex flex-col md:flex-row min-h-screen">
 
-    <!-- SIDEBAR -->
     {% include "navbar.html" %}
 
 
-    <!-- CONTENU PRINCIPAL -->
-    <div class="flex-1 flex flex-col">
+    <div class="flex-1 flex flex-col min-w-0">
 
-        <main class="flex-grow max-w-7xl mx-auto p-6">
+        <main class="flex-grow w-full max-w-7xl mx-auto p-4 md:p-6">
             {% block content %}{% endblock %}
         </main>
 
@@ -31,7 +84,6 @@
 
 </div>
 
-<!-- ⏰ HEURE + DATE -->
 <script>
     function updateClockAndDate() {
         const now = new Date();
@@ -56,7 +108,6 @@
     updateClockAndDate();
 </script>
 
-<!-- 🌤️ MÉTÉO -->
 <script>
     const API_KEY = "4416c74cf96d63edcac9dfc1db922ae8";
     const CITY = "Conakry";
@@ -84,6 +135,24 @@
     }
 
     getWeather();
+</script>
+<script>
+    function toggleTheme() {
+        const body = document.body;
+        // On bascule une classe "light-mode" sur le body
+        body.classList.toggle('light-mode');
+        
+        // Optionnel : Sauvegarder la préférence dans le navigateur
+        const isLight = body.classList.contains('light-mode');
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    }
+
+    // Au chargement de la page, on vérifie si l'utilisateur avait déjà choisi le mode clair
+    window.onload = () => {
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-mode');
+        }
+    };
 </script>
 
 </body>

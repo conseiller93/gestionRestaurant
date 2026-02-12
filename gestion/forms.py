@@ -10,4 +10,4 @@ class TableRestaurantForm(forms.ModelForm):
 class PlatForm(forms.ModelForm):
     class Meta:
         model = Plat
-        fields = ['nom', 'prix_unitaire', 'image', 'disponible']
+        fields = ['nom', 'prix_unitaire', 'image','quantite_disponible', 'disponible']
