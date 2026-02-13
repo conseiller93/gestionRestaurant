@@ -1,5 +1,5 @@
 # =========================================================
-# views.py — Toutes les vues du restaurant (VERSION CORRIGÉE)
+# views.py — Toutes les vues du restaurant
 # =========================================================
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -43,12 +43,32 @@ def role_required(*roles):
 def login_view(request):
     initial_identifiant = ''
     initial_password = ''
+    auto_login = False
 
     u = request.GET.get('u', '')
     p = request.GET.get('p', '')
-    if u and p:
+
+    # Tentative de connexion automatique si u et p sont dans l'URL (QR code)
+    if u and p and request.method == 'GET':
+        user = authenticate(request, identifiant=u, password=p)
+        if user is not None:
+            if user.role == 'tablette':
+                tablette = Tablette.objects.filter(user=user).first()
+                if tablette and tablette.is_blocked:
+                    return render(request, 'login.html', {
+                        'error': "Cette tablette est temporairement bloquée par l'administrateur.",
+                        'initial_identifiant': u,
+                    })
+            login(request, user)
+            return redirect('Accueil')
+        else:
+            initial_identifiant = u
+            initial_password = p
+            auto_login = True
+
+    if u and not p:
         initial_identifiant = u
-        initial_password = p
+        auto_login = True
 
     if request.method == "POST":
         identifiant = request.POST.get('identifiant', '').strip()
@@ -66,12 +86,13 @@ def login_view(request):
         else:
             return render(request, 'login.html', {
                 'error': 'Identifiant ou mot de passe incorrect.',
-                'initial_identifiant': initial_identifiant,
+                'initial_identifiant': identifiant,
             })
 
     return render(request, 'login.html', {
         'initial_identifiant': initial_identifiant,
         'initial_password': initial_password,
+        'auto_login': auto_login,
     })
 
 
@@ -696,7 +717,7 @@ def admin_tout_supprimer(request):
 
 
 # =========================================================
-# ADMINISTRATION — CORRIGÉE : association table/tablette
+# ADMINISTRATION
 # =========================================================
 @login_required(login_url="login")
 def admin_page(request):
@@ -766,7 +787,6 @@ def admin_page(request):
                 messages.success(request, "Utilisateur supprimé.")
 
         # ── CRÉER / ASSOCIER TABLE + TABLETTE ──
-        # CORRIGÉ : logique intelligente — crée ce qui manque, évite les doublons
         elif "creer_tablette" in request.POST:
             numero = request.POST.get("numero_table", "").strip()
             places = request.POST.get("nombre_places", "").strip()
@@ -783,20 +803,16 @@ def admin_page(request):
                     messages.error(request, "Numéro de table et nombre de places doivent être des entiers.")
                     return redirect("controle_general")
 
-                # 1) Récupérer ou créer la table
                 table, table_created = TableRestaurant.objects.get_or_create(
                     numero_table=numero_int,
                     defaults={'nombre_places': places_int}
                 )
                 if not table_created:
-                    # La table existe déjà — on met à jour le nombre de places si fourni
                     table.nombre_places = places_int
                     table.save()
 
-                # 2) Récupérer ou créer l'utilisateur tablette
                 user_tab = CustomUser.objects.filter(identifiant=ident_tab).first()
                 if user_tab is None:
-                    # L'utilisateur n'existe pas → on le crée
                     if not pass_tab:
                         messages.error(request, "Un mot de passe est requis pour créer un nouvel utilisateur tablette.")
                         return redirect("controle_general")
@@ -804,44 +820,42 @@ def admin_page(request):
                     user_tab.set_password(pass_tab)
                     user_tab.save()
                 else:
-                    # L'utilisateur existe déjà — on met à jour le mot de passe si fourni
                     if pass_tab:
                         user_tab.set_password(pass_tab)
                         user_tab.save()
-                    # Vérifier que c'est bien un rôle tablette
                     if user_tab.role != 'tablette':
-                        messages.error(request, f"L'utilisateur « {ident_tab} » existe déjà avec un rôle différent (rôle : {user_tab.role}).")
+                        messages.error(request, f"L'utilisateur « {ident_tab} » existe déjà avec un rôle différent.")
                         return redirect("controle_general")
 
-                # 3) Récupérer ou créer la Tablette (lien table ↔ user)
-                # Cas : la table a déjà une tablette liée → on la remplace
                 tablette_existante_table = Tablette.objects.filter(table=table).first()
-                # Cas : l'user a déjà une tablette liée → on la remplace
                 tablette_existante_user = Tablette.objects.filter(user=user_tab).first()
 
                 if tablette_existante_table and tablette_existante_user:
                     if tablette_existante_table == tablette_existante_user:
-                        # Déjà associés — rien à faire
+                        # Mettre à jour le qr_password si un nouveau mot de passe est fourni
+                        if pass_tab:
+                            tablette_existante_table.qr_password = pass_tab
+                            tablette_existante_table.save()
                         messages.success(request, f"✅ Table {numero} déjà associée à « {ident_tab} ».")
                     else:
-                        # Conflit : deux tablettes différentes → on supprime les deux et on recrée
                         tablette_existante_table.delete()
                         tablette_existante_user.delete()
-                        Tablette.objects.create(user=user_tab, table=table)
-                        messages.success(request, f"✅ Table {numero} ré-associée à « {ident_tab} » (anciens liens supprimés).")
+                        Tablette.objects.create(user=user_tab, table=table, qr_password=pass_tab or None)
+                        messages.success(request, f"✅ Table {numero} ré-associée à « {ident_tab} ».")
                 elif tablette_existante_table:
-                    # La table est déjà liée à un autre user → on met à jour
                     tablette_existante_table.user = user_tab
+                    if pass_tab:
+                        tablette_existante_table.qr_password = pass_tab
                     tablette_existante_table.save()
                     messages.success(request, f"✅ Table {numero} ré-associée à « {ident_tab} ».")
                 elif tablette_existante_user:
-                    # L'user est déjà lié à une autre table → on met à jour
                     tablette_existante_user.table = table
+                    if pass_tab:
+                        tablette_existante_user.qr_password = pass_tab
                     tablette_existante_user.save()
                     messages.success(request, f"✅ Tablette « {ident_tab} » ré-associée à la Table {numero}.")
                 else:
-                    # Aucune tablette existante → création normale
-                    Tablette.objects.create(user=user_tab, table=table)
+                    Tablette.objects.create(user=user_tab, table=table, qr_password=pass_tab or None)
                     msg_table = "créée" if table_created else "existante"
                     messages.success(request, f"✅ Table {numero} ({msg_table}) et tablette « {ident_tab} » associées.")
 
@@ -855,7 +869,7 @@ def admin_page(request):
             table_to_del.delete()
             messages.success(request, "Table et compte tablette supprimés.")
 
-        # ── GÉNÉRER QR CODE ──
+        # ── GÉNÉRER QR CODE (connexion automatique avec u + p dans l'URL) ──
         elif "generer_qr" in request.POST:
             import qrcode
             from io import BytesIO
@@ -865,20 +879,24 @@ def admin_page(request):
             tab_info = Tablette.objects.filter(table=table).first()
 
             if tab_info and tab_info.user:
-                # CORRIGÉ : on n'inclut PAS le mot de passe dans l'URL
-                # Le QR code préremplit seulement l'identifiant — plus sécurisé
                 base_url = request.build_absolute_uri(reverse('login'))
-                url = f"{base_url}?u={tab_info.user.identifiant}"
+
+                # Si on a le mot de passe stocké → connexion 100% automatique
+                if tab_info.qr_password:
+                    url = f"{base_url}?u={tab_info.user.identifiant}&p={tab_info.qr_password}"
+                else:
+                    # Sinon, seulement l'identifiant → le client saisit son mot de passe
+                    url = f"{base_url}?u={tab_info.user.identifiant}"
 
                 qr = qrcode.QRCode(
                     version=1,
-                    error_correction=qrcode.constants.ERROR_CORRECT_L,
-                    box_size=10,
+                    error_correction=qrcode.constants.ERROR_CORRECT_H,
+                    box_size=12,
                     border=4,
                 )
                 qr.add_data(url)
                 qr.make(fit=True)
-                img = qr.make_image(fill_color="black", back_color="white")
+                img = qr.make_image(fill_color="#1a1a2e", back_color="white")
                 buf = BytesIO()
                 img.save(buf)
                 return HttpResponse(buf.getvalue(), content_type="image/png")
@@ -887,7 +905,7 @@ def admin_page(request):
 
         return redirect("controle_general")
 
-    # GET — préparation du contexte
+    # GET
     utilisateurs = CustomUser.objects.all().order_by("role", "identifiant")
     tables_data = []
     for t in TableRestaurant.objects.all().order_by("numero_table"):
@@ -901,7 +919,6 @@ def admin_page(request):
             "active": tab_info.active if tab_info else False,
         })
 
-    # NOUVEAU : tables sans tablette et tablettes sans table pour l'admin
     tables_sans_tablette = TableRestaurant.objects.filter(tablette__isnull=True).order_by("numero_table")
     users_tablette_sans_table = CustomUser.objects.filter(
         role='tablette', tablette__isnull=True

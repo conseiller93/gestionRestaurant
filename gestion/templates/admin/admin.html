@@ -9,21 +9,36 @@
 {% block content %}
 <div class="max-w-[1600px] mx-auto px-4 py-6">
 
-  <div class="text-center mb-10">
+  <div class="text-center mb-8">
     <h1 class="text-4xl font-bold text-yellow-400 mb-2 admin-title">👑 Gestion Des Utilisateurs</h1>
     <p class="text-gray-400 admin-subtitle">Gestion des utilisateurs, tables et tablettes du restaurant.</p>
+
+    {# ── LIEN VERS L'ADMINISTRATION DJANGO ── #}
+    <div class="mt-4 flex justify-center">
+      <a href="/admin/" target="_blank"
+         class="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg shadow-purple-900/30">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        Administration Django
+      </a>
+    </div>
   </div>
 
-  {% if messages %}
-  {% for message in messages %}
-    <div class="flash-message mb-4 px-4 py-3 rounded-lg text-sm font-medium
-      {% if message.tags == 'success' %} bg-green-800 text-green-200 border border-green-600
-      {% elif message.tags == 'error' %} bg-red-800 text-red-200 border border-red-600
-      {% else %} bg-gray-700 text-gray-200 border border-gray-500 {% endif %}">
-      {{ message }}
+  {# ── TOASTS TEMPORAIRES ── #}
+  <div id="toast-container" class="fixed top-4 right-4 z-[200] space-y-2 pointer-events-none">
+    {% for message in messages %}
+    <div class="toast-msg pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border text-sm font-bold
+      {% if message.tags == 'success' %}bg-gray-900/95 text-green-400 border-green-500/30
+      {% elif message.tags == 'error' %}bg-gray-900/95 text-red-400 border-red-500/30
+      {% else %}bg-gray-900/95 text-yellow-400 border-yellow-500/30{% endif %}
+      backdrop-blur-md animate-slide-in">
+      <span>{{ message }}</span>
+      <button onclick="this.parentElement.remove()" class="text-white/30 hover:text-white ml-2 text-lg leading-none">×</button>
     </div>
-  {% endfor %}
-  {% endif %}
+    {% endfor %}
+  </div>
 
   <div class="mb-8 flex justify-end">
     <div class="relative" x-data="{ open: false }">
@@ -50,7 +65,7 @@
     </div>
   </div>
 
-  {# ════════════════════════════════ UTILISATEURS ════════════════════════════════ #}
+  {# ════════ UTILISATEURS ════════ #}
   <section class="mb-12">
     <h2 class="text-2xl text-gray-100 font-bold mb-6 flex items-center gap-3 section-title">
       <span class="text-3xl">👤</span> Utilisateurs
@@ -93,14 +108,14 @@
                   class="flex-1 bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm px-3 py-2 rounded-lg transition btn-edit">
             ✏️ Modifier
           </button>
-          <form method="POST" id="form-del-user-{{ u.id }}" class="flex-1">
+          <button onclick="askConfirmDelete('form-del-user-{{ u.id }}', 'utilisateur « {{ u.identifiant }} »')"
+                  class="flex-1 bg-red-700 hover:bg-red-600 text-white text-sm px-3 py-2 rounded-lg transition">
+            🗑️ Supprimer
+          </button>
+          <form method="POST" id="form-del-user-{{ u.id }}" class="hidden">
             {% csrf_token %}
             <input type="hidden" name="user_id" value="{{ u.id }}">
             <input type="hidden" name="supprimer_utilisateur">
-            <button type="button" onclick="askConfirmDelete('form-del-user-{{ u.id }}')"
-                    class="w-full bg-red-700 hover:bg-red-600 text-white text-sm px-3 py-2 rounded-lg transition">
-              🗑️ Supprimer
-            </button>
           </form>
         </div>
       </div>
@@ -108,7 +123,7 @@
     </div>
   </section>
 
-  {# ════════════════════════════════ TABLES & TABLETTES ════════════════════════════════ #}
+  {# ════════ TABLES & TABLETTES ════════ #}
   <section class="mb-12">
     <h2 class="text-2xl text-gray-100 font-bold mb-6 flex items-center gap-3 section-title">
       <span class="text-3xl">🪑</span> Tables & Tablettes
@@ -136,18 +151,15 @@
         </div>
 
         <div class="flex flex-col gap-2">
-
           {% if t.user_tablette %}
-          {# ── LIEN QR CORRIGÉ : seulement identifiant, pas de mot de passe ── #}
           <div class="mt-2 text-center bg-gray-900/50 rounded-lg p-2">
             <p class="text-[9px] text-gray-500 uppercase font-bold mb-1">URL de connexion rapide</p>
             <code class="text-[10px] text-blue-400 break-all bg-black/30 p-1 rounded block">
               /login/?u={{ t.user_tablette.identifiant }}
             </code>
-            <p class="text-[9px] text-gray-600 mt-1">Le client entre son mot de passe sur place</p>
+            <p class="text-[9px] text-gray-600 mt-1">QR Code → connexion auto avec mot de passe inclus</p>
           </div>
 
-          {# ── GÉNÉRER QR CODE — action correcte + target blank ── #}
           <form method="POST" action="{% url 'controle_general' %}" target="_blank" class="mt-1">
             {% csrf_token %}
             <input type="hidden" name="table_id" value="{{ t.id }}">
@@ -166,7 +178,6 @@
           </div>
           {% endif %}
 
-          {# ── BLOQUER / DÉBLOQUER ── #}
           {% if t.tablette %}
           <form method="POST" action="{% url 'toggle_blocage_tablette' t.tablette.id %}">
             {% csrf_token %}
@@ -177,15 +188,14 @@
           </form>
           {% endif %}
 
-          {# ── SUPPRIMER TABLE ── #}
-          <form method="POST" id="form-del-table-{{ t.id }}">
+          <button onclick="askConfirmDelete('form-del-table-{{ t.id }}', 'la table {{ t.numero }} et son compte tablette')"
+                  class="w-full bg-red-700 hover:bg-red-600 text-white py-2 rounded-lg transition text-sm font-bold">
+            🗑️ Supprimer
+          </button>
+          <form method="POST" id="form-del-table-{{ t.id }}" class="hidden">
             {% csrf_token %}
             <input type="hidden" name="table_id" value="{{ t.id }}">
             <input type="hidden" name="supprimer_table">
-            <button type="button" onclick="askConfirmDelete('form-del-table-{{ t.id }}')"
-                    class="w-full bg-red-700 hover:bg-red-600 text-white py-2 rounded-lg transition text-sm font-bold">
-              🗑️ Supprimer
-            </button>
           </form>
         </div>
       </div>
@@ -193,19 +203,16 @@
     </div>
   </section>
 
-  {# ════════════════════════════════ ORPHELINS ════════════════════════════════ #}
+  {# ════════ ORPHELINS ════════ #}
   {% if tables_sans_tablette or users_tablette_sans_table %}
   <section class="mb-12">
     <h2 class="text-xl text-orange-400 font-bold mb-4 flex items-center gap-2">
       <span>⚠️</span> Éléments non associés
     </h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
       {% if tables_sans_tablette %}
       <div class="bg-orange-900/10 border border-orange-500/30 rounded-xl p-5">
-        <h3 class="text-orange-400 font-bold mb-3 text-sm uppercase tracking-widest">
-          Tables sans tablette ({{ tables_sans_tablette|length }})
-        </h3>
+        <h3 class="text-orange-400 font-bold mb-3 text-sm uppercase tracking-widest">Tables sans tablette ({{ tables_sans_tablette|length }})</h3>
         <div class="space-y-2">
           {% for tbl in tables_sans_tablette %}
           <div class="flex items-center justify-between bg-black/20 rounded-lg px-4 py-2">
@@ -219,12 +226,9 @@
         </div>
       </div>
       {% endif %}
-
       {% if users_tablette_sans_table %}
       <div class="bg-blue-900/10 border border-blue-500/30 rounded-xl p-5">
-        <h3 class="text-blue-400 font-bold mb-3 text-sm uppercase tracking-widest">
-          Utilisateurs tablette sans table ({{ users_tablette_sans_table|length }})
-        </h3>
+        <h3 class="text-blue-400 font-bold mb-3 text-sm uppercase tracking-widest">Utilisateurs tablette sans table ({{ users_tablette_sans_table|length }})</h3>
         <div class="space-y-2">
           {% for usr in users_tablette_sans_table %}
           <div class="flex items-center justify-between bg-black/20 rounded-lg px-4 py-2">
@@ -238,14 +242,13 @@
         </div>
       </div>
       {% endif %}
-
     </div>
   </section>
   {% endif %}
 
 </div>
 
-{# ════════════════════════════════ MODALS ════════════════════════════════ #}
+{# ════════ MODALS ════════ #}
 
 {# Modal Ajouter Utilisateur #}
 <div id="modalAjouterUser" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4">
@@ -318,12 +321,12 @@
   </div>
 </div>
 
-{# Modal Créer / Associer Table + Tablette — CORRIGÉ #}
+{# Modal Créer / Associer Table + Tablette #}
 <div id="modalAjouterTable" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4">
   <div class="bg-gray-800 border border-gray-700 p-7 rounded-2xl w-full max-w-lg relative modal-content-admin">
     <button onclick="closeModal('modalAjouterTable')" class="absolute top-5 right-5 text-gray-400 hover:text-white text-3xl">&times;</button>
     <h2 class="text-gray-100 font-bold text-xl mb-2 modal-title">🪑 Créer / Associer Table + Tablette</h2>
-    <p class="text-gray-500 text-xs mb-6">Si la table ou la tablette existe déjà, elle sera récupérée et mise à jour. Le mot de passe est optionnel si l'utilisateur existe déjà.</p>
+    <p class="text-gray-500 text-xs mb-4">Le mot de passe saisi ici sera inclus dans le QR Code pour la connexion automatique.</p>
     <form method="POST">
       {% csrf_token %}
       <div class="bg-gray-900 rounded-lg p-4 mb-4 sub-card">
@@ -334,8 +337,8 @@
       <div class="bg-gray-900 rounded-lg p-4 mb-6 sub-card">
         <p class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-3">📱 Tablette</p>
         <input name="identifiant_tablette" placeholder="Identifiant tablette (ex: TABLE_01)" required class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin mb-3" id="inputIdentTabl">
-        <input type="password" name="password_tablette" placeholder="Mot de passe (requis si nouvel utilisateur)" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin" id="inputPassTabl">
-        <p class="text-gray-600 text-[10px] mt-2">Laisser vide si l'utilisateur existe déjà et que vous ne souhaitez pas changer son mot de passe.</p>
+        <input type="password" name="password_tablette" placeholder="Mot de passe (inclus dans QR pour connexion auto)" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin" id="inputPassTabl">
+        <p class="text-gray-600 text-[10px] mt-2">⚠️ Le mot de passe sera encodé dans l'URL du QR Code pour connexion automatique.</p>
       </div>
       <button type="submit" name="creer_tablette" class="w-full bg-green-600 hover:bg-green-700 py-3 rounded-lg font-bold text-white">
         ✅ Associer / Créer
@@ -344,12 +347,14 @@
   </div>
 </div>
 
-{# Modal Confirmation Suppression #}
+{# Modal Confirmation Suppression (remplace confirm()) #}
 <div id="modalConfirmSuppr" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[100] px-4">
   <div class="bg-gray-800 border border-gray-700 p-8 rounded-2xl w-full max-w-sm relative shadow-2xl modal-content-admin text-center">
     <div class="text-red-500 text-6xl mb-4">⚠️</div>
     <h3 class="text-xl font-bold text-white mb-2 modal-title">Confirmation</h3>
-    <p class="text-gray-400 mb-8 admin-subtitle">Voulez-vous vraiment supprimer cet élément ? Cette action est définitive.</p>
+    <p class="text-gray-400 mb-2 admin-subtitle">Voulez-vous vraiment supprimer</p>
+    <p id="confirmDeleteLabel" class="text-white font-bold mb-6 italic text-sm"></p>
+    <p class="text-gray-600 text-xs mb-6">Cette action est définitive et irréversible.</p>
     <div class="flex gap-4">
       <button onclick="closeModal('modalConfirmSuppr')" class="flex-1 px-4 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition btn-edit">Annuler</button>
       <button id="btnConfirmDelete" class="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg">Supprimer</button>
@@ -358,6 +363,12 @@
 </div>
 
 <style>
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateX(100%); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .animate-slide-in { animation: slide-in 0.3s ease-out; }
+
   /* MODE CLAIR */
   body.light-mode .admin-title { color: #b45309 !important; }
   body.light-mode .admin-subtitle { color: #4b5563 !important; }
@@ -382,8 +393,6 @@
     color: #111827 !important;
   }
   body.light-mode .label-admin { color: #374151 !important; }
-  body.light-mode .text-gray-400 { color: #6b7280 !important; }
-  body.light-mode .text-gray-500 { color: #9ca3af !important; }
 </style>
 
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -413,7 +422,6 @@ function openModifierUser(id, ident, fn, ln, em, role) {
   openModal("modalModifierUser");
 }
 
-// Pré-remplir le modal d'association depuis les boutons "Associer"
 function preRemplirAssociation(tableId, numero, places) {
   document.getElementById("inputNumeroTable").value = numero;
   document.getElementById("inputNombrePlaces").value = places;
@@ -430,8 +438,10 @@ function preRemplirAssociationUser(identifiant) {
   openModal("modalAjouterTable");
 }
 
-function askConfirmDelete(formId) {
+// Remplace confirm() natif par une modale
+function askConfirmDelete(formId, label) {
   formToSubmit = document.getElementById(formId);
+  document.getElementById('confirmDeleteLabel').textContent = label + ' ?';
   openModal('modalConfirmSuppr');
 }
 
@@ -439,6 +449,7 @@ document.getElementById('btnConfirmDelete').addEventListener('click', function()
   if (formToSubmit) formToSubmit.submit();
 });
 
+// Fermer modales en cliquant à l'extérieur
 document.addEventListener('click', function(e) {
   ['modalAjouterUser', 'modalModifierUser', 'modalAjouterTable', 'modalConfirmSuppr'].forEach(id => {
     let m = document.getElementById(id);
@@ -446,14 +457,17 @@ document.addEventListener('click', function(e) {
   });
 });
 
-document.addEventListener("DOMContentLoaded", function() { toggleNomEmail(); });
-
-setTimeout(() => {
-  document.querySelectorAll('.flash-message').forEach(msg => {
-    msg.style.transition = 'opacity 0.5s ease';
-    msg.style.opacity = '0';
-    setTimeout(() => msg.remove(), 500);
+// Auto-dismiss des toasts
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.toast-msg').forEach(function(el) {
+    setTimeout(function() {
+      el.style.transition = 'all 0.4s ease';
+      el.style.opacity = '0';
+      el.style.transform = 'translateX(100%)';
+      setTimeout(function() { el.remove(); }, 400);
+    }, 5000);
   });
-}, 10000);
+  toggleNomEmail();
+});
 </script>
 {% endblock %}

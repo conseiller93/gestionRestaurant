@@ -65,8 +65,13 @@ class Tablette(models.Model):
     )
     table = models.OneToOneField(TableRestaurant, on_delete=models.CASCADE)
     active = models.BooleanField(default=True)
-    is_blocked = models.BooleanField(default=False) 
+    is_blocked = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    # Stocké en clair uniquement pour générer les QR Codes (usage physique interne)
+    qr_password = models.CharField(
+        max_length=128, blank=True, null=True,
+        help_text="Mot de passe en clair pour les QR Codes"
+    )
 
     def __str__(self):
         return f"Tablette : {self.user.identifiant} (Table {self.table.numero_table})"

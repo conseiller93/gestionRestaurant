@@ -30,30 +30,30 @@
             </div>
 
             {% if user.role == 'admin' or user.is_superuser %}
-            <form method="POST" action="{% url 'admin_tout_supprimer' %}"
-                  onsubmit="return confirm('ATTENTION : Supprimer TOUTES les commandes ? Action irreversible.')">
+            <button onclick="askConfirmAction('form-tout-supprimer', 'supprimer TOUTES les commandes', 'Cette action est irréversible !')"
+                    class="flex items-center gap-2 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white px-5 py-4 rounded-2xl border border-red-500/30 font-black text-xs uppercase tracking-widest transition-all">
+                🗑 Tout supprimer
+            </button>
+            <form id="form-tout-supprimer" method="POST" action="{% url 'admin_tout_supprimer' %}" class="hidden">
                 {% csrf_token %}
                 <input type="hidden" name="type" value="commandes">
-                <button type="submit"
-                        class="flex items-center gap-2 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white px-5 py-4 rounded-2xl border border-red-500/30 font-black text-xs uppercase tracking-widest transition-all">
-                    🗑 Tout supprimer
-                </button>
             </form>
             {% endif %}
         </div>
     </div>
 
-    {% if messages %}
-    <div class="mb-6 space-y-2">
+    {# Toasts temporaires #}
+    <div id="toast-container" class="fixed top-4 right-4 z-[200] space-y-2 pointer-events-none">
         {% for message in messages %}
-        <div class="px-6 py-4 rounded-2xl text-sm font-bold border
-            {% if message.tags == 'success' %}bg-green-900/40 text-green-400 border-green-500/20
-            {% else %}bg-red-900/40 text-red-400 border-red-500/20{% endif %}">
-            {{ message }}
+        <div class="toast-msg pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border text-sm font-bold
+            {% if message.tags == 'success' %}bg-gray-900/95 text-green-400 border-green-500/30
+            {% else %}bg-gray-900/95 text-red-400 border-red-500/30{% endif %}
+            backdrop-blur-md animate-slide-in">
+            <span>{{ message }}</span>
+            <button onclick="this.parentElement.remove()" class="text-white/30 hover:text-white ml-2 text-lg">×</button>
         </div>
         {% endfor %}
     </div>
-    {% endif %}
 
     <div class="cmd-table-wrap backdrop-blur-2xl rounded-[2.5rem] shadow-3xl border border-white/5 overflow-hidden">
         <div class="overflow-x-auto">
@@ -123,26 +123,20 @@
 
                                 {% if user.role == 'serveur' %}
                                     {% if commande.statut == 'en_attente' %}
-                                    <form method="POST" action="{% url 'serveur_valider_commande' commande.id %}"
-                                          onsubmit="return confirm('Marquer la commande #{{ commande.id }} comme servie ?')">
-                                        {% csrf_token %}
-                                        <button type="submit" class="p-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white rounded-lg border border-blue-500/30">🍽️</button>
-                                    </form>
+                                    <button onclick="askConfirmAction('form-srv-{{ commande.id }}', 'marquer la commande #{{ commande.id }} comme servie', '')"
+                                            class="p-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white rounded-lg border border-blue-500/30">🍽️</button>
+                                    <form id="form-srv-{{ commande.id }}" method="POST" action="{% url 'serveur_valider_commande' commande.id %}" class="hidden">{% csrf_token %}</form>
                                     {% elif commande.statut == 'servie' %}
-                                    <form method="POST" action="{% url 'serveur_valider_paiement' commande.id %}"
-                                          onsubmit="return confirm('Encaisser {{ commande.total }} FG pour la commande #{{ commande.id }} ?')">
-                                        {% csrf_token %}
-                                        <button type="submit" class="p-2 bg-green-500/20 text-green-400 hover:bg-green-500 hover:text-white rounded-lg border border-green-500/30">💰</button>
-                                    </form>
+                                    <button onclick="askConfirmAction('form-pay-{{ commande.id }}', 'encaisser {{ commande.total }} FG pour la commande #{{ commande.id }}', '')"
+                                            class="p-2 bg-green-500/20 text-green-400 hover:bg-green-500 hover:text-white rounded-lg border border-green-500/30">💰</button>
+                                    <form id="form-pay-{{ commande.id }}" method="POST" action="{% url 'serveur_valider_paiement' commande.id %}" class="hidden">{% csrf_token %}</form>
                                     {% endif %}
                                 {% endif %}
 
                                 {% if user.role == 'admin' or user.is_superuser %}
-                                <form method="POST" action="{% url 'supprimer_commande' commande.id %}"
-                                      onsubmit="return confirm('Supprimer definitivement la commande #{{ commande.id }} ?')">
-                                    {% csrf_token %}
-                                    <button type="submit" class="p-2 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-lg border border-red-500/20">🗑</button>
-                                </form>
+                                <button onclick="askConfirmAction('form-del-cmd-{{ commande.id }}', 'supprimer définitivement la commande #{{ commande.id }}', '')"
+                                        class="p-2 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-lg border border-red-500/20">🗑</button>
+                                <form id="form-del-cmd-{{ commande.id }}" method="POST" action="{% url 'supprimer_commande' commande.id %}" class="hidden">{% csrf_token %}</form>
                                 {% endif %}
                             </div>
                         </td>
@@ -174,7 +168,28 @@
     </div>
 </div>
 
+{# Modal Confirmation Action (remplace confirm()) #}
+<div id="modalConfirmAction" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[150] p-4">
+    <div class="bg-gray-800 border border-gray-700 p-7 rounded-2xl w-full max-w-sm text-center shadow-2xl">
+        <div class="text-yellow-500 text-5xl mb-3">❓</div>
+        <h3 class="text-xl font-bold text-white mb-2">Confirmation</h3>
+        <p class="text-gray-400 mb-1 text-sm">Voulez-vous vraiment</p>
+        <p id="confirmActionLabel" class="text-white font-bold italic text-sm mb-2"></p>
+        <p id="confirmActionSubLabel" class="text-red-400 text-xs mb-6"></p>
+        <div class="flex gap-3">
+            <button onclick="closeConfirmAction()" class="flex-1 px-4 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition font-bold">Annuler</button>
+            <button id="btnConfirmAction" class="flex-1 px-4 py-3 bg-yellow-500 hover:bg-yellow-400 text-black rounded-xl font-black transition">Confirmer</button>
+        </div>
+    </div>
+</div>
+
 <style>
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateX(100%); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .animate-slide-in { animation: slide-in 0.3s ease-out; }
+
   /* DARK */
   .cmd-title { color: #ffffff; }
   .cmd-text { color: #ffffff; }
@@ -190,31 +205,17 @@
   body.light-mode .cmd-title { color: #111827 !important; }
   body.light-mode .cmd-text { color: #111827 !important; }
   body.light-mode .cmd-count { color: #111827 !important; }
-  body.light-mode .cmd-counter-box {
-    background: #ffffff !important;
-    border-color: #e5e7eb !important;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08) !important;
-  }
+  body.light-mode .cmd-counter-box { background: #ffffff !important; border-color: #e5e7eb !important; box-shadow: 0 2px 10px rgba(0,0,0,0.08) !important; }
   body.light-mode .cmd-row { background: #ffffff !important; box-shadow: 0 1px 6px rgba(0,0,0,0.05); }
   body.light-mode .cmd-row:hover { background: #f9fafb !important; }
-  body.light-mode .cmd-badge {
-    background: #f3f4f6 !important;
-    border-color: #e5e7eb !important;
-    color: #374151 !important;
-  }
-  body.light-mode .cmd-table-wrap {
-    background: #f3f4f6 !important;
-    border-color: #e5e7eb !important;
-  }
-  body.light-mode .details-modal-box {
-    background: #ffffff !important;
-    border-color: #e5e7eb !important;
-  }
-  body.light-mode .text-gray-500 { color: #9ca3af !important; }
-  body.light-mode .text-gray-600 { color: #6b7280 !important; }
+  body.light-mode .cmd-badge { background: #f3f4f6 !important; border-color: #e5e7eb !important; color: #374151 !important; }
+  body.light-mode .cmd-table-wrap { background: #f3f4f6 !important; border-color: #e5e7eb !important; }
+  body.light-mode .details-modal-box { background: #ffffff !important; border-color: #e5e7eb !important; }
 </style>
 
 <script>
+let actionFormId = null;
+
 function openDetailsModal(id, table, total, statut, date, plats) {
     document.getElementById('d_id').innerText = id;
     document.getElementById('d_plats').innerHTML = plats;
@@ -223,6 +224,42 @@ function openDetailsModal(id, table, total, statut, date, plats) {
 function closeDetailsModal() {
     document.getElementById('detailsModal').classList.add('hidden');
 }
+
+function askConfirmAction(formId, label, subLabel) {
+    actionFormId = formId;
+    document.getElementById('confirmActionLabel').textContent = label + ' ?';
+    document.getElementById('confirmActionSubLabel').textContent = subLabel;
+    document.getElementById('modalConfirmAction').classList.remove('hidden');
+}
+function closeConfirmAction() {
+    document.getElementById('modalConfirmAction').classList.add('hidden');
+    actionFormId = null;
+}
+document.getElementById('btnConfirmAction').addEventListener('click', function() {
+    if (actionFormId) {
+        document.getElementById(actionFormId).submit();
+    }
+});
+
+// Fermer en cliquant à l'extérieur
+document.getElementById('detailsModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDetailsModal();
+});
+document.getElementById('modalConfirmAction').addEventListener('click', function(e) {
+    if (e.target === this) closeConfirmAction();
+});
+
+// Auto-dismiss toasts
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.toast-msg').forEach(function(el) {
+        setTimeout(function() {
+            el.style.transition = 'all 0.4s ease';
+            el.style.opacity = '0';
+            el.style.transform = 'translateX(100%)';
+            setTimeout(function() { el.remove(); }, 400);
+        }, 5000);
+    });
+});
 </script>
 {% endblock %}
 

@@ -26,7 +26,6 @@
             </a>
 
             {% if request.user.is_superuser %}
-                <a href="{% url 'admin_page' %}" @click="mobileMenuOpen = false" class="block px-4 py-2 rounded-lg hover:bg-blue-600">👑 Administration</a>
                 <a href="{% url 'controle_general' %}" @click="mobileMenuOpen = false" class="block px-4 py-2 rounded-lg hover:bg-blue-600">👤 Utilisateurs</a>
                 <a href="{% url 'serveur_index' %}" @click="mobileMenuOpen = false" class="block px-4 py-2 rounded-lg hover:bg-blue-600">🍽️ Serveur</a>
                 <a href="{% url 'table_index' %}" @click="mobileMenuOpen = false" class="flex items-center px-4 py-2 rounded-lg hover:bg-blue-600">🪑 <span class="ml-2">Tables</span></a>
@@ -34,11 +33,13 @@
                 <a href="{% url 'cuisinier_index' %}" @click="mobileMenuOpen = false" class="block px-4 py-2 rounded-lg hover:bg-blue-600">👨‍🍳 Cuisine</a>
                 <a href="{% url 'commande_index' %}" @click="mobileMenuOpen = false" class="block px-4 py-2 rounded-lg hover:bg-blue-600">🛒 Commande</a>
                 <a href="{% url 'comptable_index' %}" @click="mobileMenuOpen = false" class="block px-4 py-2 rounded-lg hover:bg-blue-600">💰 Comptabilité</a>
-                    <a href="{% url 'export_global' %}"
-                    class="flex items-center px-4 py-2 rounded-lg hover:bg-blue-600">
+                <a href="{% url 'export_global' %}" class="flex items-center px-4 py-2 rounded-lg hover:bg-blue-600">
                     📊 <span class="ml-2">Export ventes (CSV)</span>
-                    </a>
-        
+                </a>
+                {# ── LIEN ADMINISTRATION DJANGO ── #}
+                <a href="/admin/" target="_blank" class="flex items-center px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors border border-purple-500/20 mt-1">
+                    ⚙️ <span class="ml-2">Admin Django</span>
+                </a>
 
             {% else %}
                 {% if request.user.role == 'serveur' %}
