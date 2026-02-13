@@ -11,6 +11,9 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.contrib import messages
 from decimal import Decimal, InvalidOperation
+# Tu utilises Count mais il n'est pas importé au bon endroit dans views.py
+# Ajouter en haut du fichier avec les autres imports :
+from django.db.models import Sum, Count
 import csv
 from django.http import HttpResponse, HttpResponseForbidden
 from django.urls import reverse
@@ -49,25 +52,65 @@ from .models import Tablette
 from django.contrib.auth import authenticate, login
 
 def login_view(request):
-    # On récupère les paramètres 'u' et 'p' dans l'URL (venant du QR Code)
-    u = request.GET.get('u')
-    p = request.GET.get('p')
+    initial_identifiant = ''
+    initial_password = ''
 
+    # Paramètres du QR Code → on pré-remplit uniquement
+    u = request.GET.get('u', '')
+    p = request.GET.get('p', '')
     if u and p:
-            user = authenticate(request, identifiant=u, password=p)
-            if user is not None:
-                login(request, user)
-                # On force une redirection vers une page qu'on est SÛR d'avoir
-                return redirect('login')
-            else:
-                    messages.error(request, "Lien QR Code invalide ou expiré.")
+        initial_identifiant = u
+        initial_password = p  # sera mis dans le champ password (type=password, donc masqué)
 
-    # Si pas de paramètres ou échec, on affiche le formulaire normal
     if request.method == "POST":
-        # ... ta logique de login normale par formulaire ...
-        pass
-        
-    return render(request, 'login.html')
+        identifiant = request.POST.get('identifiant', '').strip()
+        password = request.POST.get('password', '').strip()
+        user = authenticate(request, identifiant=identifiant, password=password)
+        if user is not None:
+            # Vérification blocage tablette
+            if user.role == 'tablette':
+                tablette = Tablette.objects.filter(user=user).first()
+                if tablette and tablette.is_blocked:
+                    messages.error(request, "Cette tablette est temporairement bloquée.")
+                    return render(request, 'login.html', {'error': 'Tablette bloquée.'})
+            login(request, user)
+            return redirect('Accueil')
+        else:
+            messages.error(request, "Identifiant ou mot de passe incorrect.")
+
+    return render(request, 'login.html', {
+        'initial_identifiant': initial_identifiant,
+        'initial_password': initial_password,
+    })
+# Déconnecter toutes les tablettes (forcer is_active=False temporairement,
+# ou invalider leurs sessions)
+@login_required
+def deconnecter_toutes_tablettes(request):
+    if request.user.role != 'admin' and not request.user.is_superuser:
+        raise PermissionDenied
+    # Invalide toutes les sessions des users "tablette"
+    from django.contrib.sessions.models import Session
+    from django.utils import timezone
+    tablette_users = CustomUser.objects.filter(role='tablette')
+    sessions = Session.objects.filter(expire_date__gte=timezone.now())
+    for session in sessions:
+        data = session.get_decoded()
+        if str(data.get('_auth_user_id')) in [str(u.pk) for u in tablette_users]:
+            session.delete()
+    messages.success(request, "Toutes les tablettes ont été déconnectées.")
+    return redirect('controle_general')
+
+# Bloquer / débloquer une tablette
+@login_required
+def toggle_blocage_tablette(request, tablette_id):
+    if request.user.role != 'admin' and not request.user.is_superuser:
+        raise PermissionDenied
+    tablette = get_object_or_404(Tablette, id=tablette_id)
+    tablette.is_blocked = not tablette.is_blocked
+    tablette.save()
+    etat = "bloquée" if tablette.is_blocked else "débloquée"
+    messages.success(request, f"Tablette Table {tablette.table.numero_table} {etat}.")
+    return redirect('controle_general')
 def logout_view(request):
     logout(request)
     return redirect('login')
@@ -87,6 +130,14 @@ def Accueil(request):
 @login_required(login_url='login')
 @role_required('tablette', 'admin')
 def tablette_index(request):
+    # --- VÉRIFICATION BLOCAGE (avant tout) ---
+    if request.user.role == 'tablette':
+        tablette_check = Tablette.objects.filter(user=request.user).first()
+        if tablette_check and tablette_check.is_blocked:
+            logout(request)
+            messages.error(request, "Cette tablette a été bloquée par l'administrateur. Contactez le responsable.")
+            return redirect('login')
+
     # --- LOGIQUE EXISTANTE CORRIGÉE ---
     tablette = Tablette.objects.filter(
         user=request.user,
@@ -123,13 +174,12 @@ def tablette_index(request):
     return render(request, 'tablette/index.html', {
         'tablette': tablette,
         'panier_items': panier_items,
-        'commandes_envoyees': commandes_envoyees, # Lecture seule
-        'panier': panier_items.exists(),          # Maintenant ça fonctionnera !
-        'panier_count': panier_items.count(),     # Utilise .count() c'est plus propre
+        'commandes_envoyees': commandes_envoyees,
+        'panier': panier_items.exists(),
+        'panier_count': panier_items.count(),
         'toutes_les_tablettes': toutes_les_tablettes,
         'taux_occupation': stats_occupation,
     })
-
 
 @login_required(login_url='login')
 @role_required('tablette', 'admin')

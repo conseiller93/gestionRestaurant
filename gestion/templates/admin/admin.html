@@ -130,7 +130,7 @@
             </code>
         </div>
 
-        <form method="POST" target="_blank" class="mt-2">
+        <form method="POST" action="{% url 'controle_general' %}" target="_blank" class="mt-2">
             {% csrf_token %}
             <input type="hidden" name="table_id" value="{{ t.id }}">
             <button type="submit" name="generer_qr" class="w-full bg-blue-600 ...">

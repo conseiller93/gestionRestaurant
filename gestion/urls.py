@@ -42,7 +42,12 @@ urlpatterns = [
 
     # ── Admin ──
     path('admin/',                                          views.admin_page,                   name='admin_page'),
-    path('controle general/',                                 views.admin_page,             name='controle_general'),
+  # Corriger :
+    path('controle-general/', views.admin_page, name='controle_general'),  # tiret, pas espace
+
+    # Ajouter :
+    path('admin/tablettes/deconnecter-toutes/', views.deconnecter_toutes_tablettes, name='deconnecter_tablettes'),
+    path('admin/tablette/<int:tablette_id>/blocage/', views.toggle_blocage_tablette, name='toggle_blocage_tablette'),
     path('export/<int:commande_id>/', views.export_commande_data, name='export_facture'), # Pour tablette
     path('export/global/', views.export_commande_data, name='export_global'), # Pour admin
     path('profil/securite/', views.modifier_mot_de_passe, name='password_change'),
