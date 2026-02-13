@@ -14,104 +14,295 @@
       </div>
 
       <nav class="space-y-4 flex-1">
-        <button onclick="showSection('paiements', this)" class="nav-btn w-full flex items-center justify-between px-6 py-5 rounded-[2rem] bg-green-600 text-white font-bold transition-all shadow-2xl shadow-green-900/40 group">
-          <span class="flex items-center gap-4"><span class="text-xl">💳</span> Paiements</span>
-          <span class="bg-black/20 px-3 py-1 rounded-full text-[10px]">{{ commandes_a_payer|length }}</span>
+        <button onclick="showSection('mises_a_jour', this)" id="btn-mises_a_jour"
+                class="nav-btn w-full flex items-center justify-between px-6 py-5 rounded-[2rem] bg-blue-600 text-white font-bold transition-all shadow-2xl shadow-blue-900/40 group">
+          <span class="flex items-center gap-4"><span class="text-xl">🔄</span> Mises à jour</span>
+          <span class="bg-black/20 px-3 py-1 rounded-full text-[10px]">{{ commandes_actives|length }}</span>
         </button>
-        <button onclick="showSection('historique', this)" class="nav-btn w-full flex items-center gap-4 px-6 py-5 rounded-[2rem] bg-gray-900/50 text-gray-400 font-semibold transition-all hover:bg-gray-800 hover:text-white">
+
+        <button onclick="showSection('historique', this)" id="btn-historique"
+                class="nav-btn w-full flex items-center gap-4 px-6 py-5 rounded-[2rem] bg-gray-900/50 text-gray-400 font-semibold transition-all hover:bg-gray-800 hover:text-white">
           <span class="text-xl">📜</span> Historique
         </button>
-        <button onclick="showSection('caisse', this)" class="nav-btn w-full flex items-center gap-4 px-6 py-5 rounded-[2rem] bg-gray-900/50 text-gray-400 font-semibold transition-all hover:bg-gray-800 hover:text-white">
+
+        <button onclick="showSection('caisse', this)" id="btn-caisse"
+                class="nav-btn w-full flex items-center gap-4 px-6 py-5 rounded-[2rem] bg-gray-900/50 text-gray-400 font-semibold transition-all hover:bg-gray-800 hover:text-white">
           <span class="text-xl">💰</span> État du Solde
         </button>
-        <button onclick="showSection('depenses', this)" class="nav-btn w-full flex items-center gap-4 px-6 py-5 rounded-[2rem] bg-gray-900/50 text-gray-400 font-semibold transition-all hover:bg-gray-800 hover:text-white">
+
+        <button onclick="showSection('depenses', this)" id="btn-depenses"
+                class="nav-btn w-full flex items-center gap-4 px-6 py-5 rounded-[2rem] bg-gray-900/50 text-gray-400 font-semibold transition-all hover:bg-gray-800 hover:text-white">
           <span class="text-xl">📉</span> Dépenses
         </button>
       </nav>
 
       <div class="mt-auto pt-6 border-t border-white/5 flex items-center gap-4">
         <div class="w-10 h-10 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-500 border border-emerald-500/20">🔑</div>
-        <div><p class="text-[10px] text-gray-500 font-black uppercase">Comptable</p><p class="text-sm font-bold">{{ request.user.identifiant }}</p></div>
+        <div>
+          <p class="text-[10px] text-gray-500 font-black uppercase">Comptable</p>
+          <p class="text-sm font-bold">{{ request.user.identifiant }}</p>
+        </div>
       </div>
     </aside>
 
     <main class="flex-1 p-6 lg:p-12 overflow-y-auto">
-      
-      <section id="paiements" class="section-content animate-fade-in">
+
+      {# ════════════════════════════════════════════════ #}
+      {# SECTION MISES À JOUR — LECTURE SEULE             #}
+      {# ════════════════════════════════════════════════ #}
+      <section id="mises_a_jour" class="section-content animate-fade-in">
         <header class="mb-12">
-          <h1 class="text-5xl font-black tracking-tight mb-2">Validations</h1>
-          <p class="text-gray-500 font-medium font-sm italic underline decoration-green-500/20">Commandes en attente de paiement immédiat.</p>
+          <h1 class="text-5xl font-black tracking-tight mb-2">Mises à jour <span class="text-blue-400">en cours</span></h1>
+          <p class="text-gray-500 font-medium italic">Suivi en temps réel des commandes actives — lecture seule.</p>
         </header>
-        
-        <div class="grid gap-10 xl:grid-cols-2">
-          {% for cmd in commandes_a_payer %}
-          <div class="bg-gray-900/30 border border-white/5 rounded-[3rem] p-10 relative overflow-hidden group hover:border-green-500/30 transition-all shadow-2xl">
-            <div class="flex justify-between items-start mb-8 relative z-10">
-              <div>
-                <span class="bg-blue-500/10 text-blue-400 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-500/10">📦 Table {{ cmd.tablette.table.numero_table }}</span>
-                <h2 class="text-6xl font-black text-white mt-6 tracking-tighter">{{ cmd.total }}<span class="text-xl text-green-500 ml-2">FG</span></h2>
-              </div>
-              <button onclick="confirmDeletion('{{ cmd.id }}', 'commande', 'Commande #{{ cmd.id }}')" class="p-4 text-gray-500 hover:text-red-500 bg-white/5 rounded-2xl transition-all">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-              </button>
-            </div>
-            <form method="post" class="flex flex-col sm:flex-row gap-4 relative z-10">
-              {% csrf_token %}
-              <input type="hidden" name="payer_commande" value="1">
-              <input type="hidden" name="commande_id" value="{{ cmd.id }}">
-              <select name="mode" class="flex-1 bg-gray-800 border-none ring-1 ring-white/10 px-6 py-5 rounded-[2rem] text-sm font-bold appearance-none cursor-pointer">
-                <option value="cash">💵 RÈGLEMENT ESPÈCES</option>
-                <option value="orange_money">📱 ORANGE MONEY</option>
-              </select>
-              <button type="submit" class="bg-green-600 hover:bg-green-500 text-white px-12 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-xl shadow-green-900/40 transition-all hover:scale-[1.02] active:scale-95">VALIDER</button>
-            </form>
+
+        {% if messages %}
+        <div class="mb-6 space-y-2">
+          {% for message in messages %}
+          <div class="px-6 py-4 rounded-2xl text-sm font-bold
+            {% if message.tags == 'success' %}bg-green-900/40 text-green-400 border border-green-500/20
+            {% else %}bg-red-900/40 text-red-400 border border-red-500/20{% endif %}">
+            {{ message }}
           </div>
           {% endfor %}
         </div>
+        {% endif %}
+
+        {% if commandes_actives %}
+        <div class="grid gap-8 xl:grid-cols-2">
+          {% for cmd in commandes_actives %}
+          <div class="bg-gray-900/30 border
+            {% if cmd.statut == 'en_attente' %}border-yellow-500/20{% else %}border-blue-500/20{% endif %}
+            rounded-[3rem] p-10 relative overflow-hidden transition-all shadow-2xl">
+
+            {# En-tête : Table + Statut #}
+            <div class="flex justify-between items-start mb-8 relative z-10">
+              <div>
+                <span class="{% if cmd.statut == 'en_attente' %}bg-yellow-500/10 text-yellow-400 border-yellow-500/20{% else %}bg-blue-500/10 text-blue-400 border-blue-500/20{% endif %} px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border">
+                  {% if cmd.statut == 'en_attente' %}⏳ En cuisine{% else %}🍽️ Servie — en attente d'encaissement{% endif %}
+                </span>
+                <div class="flex items-center gap-4 mt-4">
+                  <div class="w-14 h-14 bg-yellow-500/10 rounded-2xl flex items-center justify-center text-yellow-400 font-black text-2xl border border-yellow-500/20">
+                    {{ cmd.tablette.table.numero_table }}
+                  </div>
+                  <div>
+                    <p class="text-white font-black text-xl">Table {{ cmd.tablette.table.numero_table }}</p>
+                    <p class="text-gray-500 text-xs">{{ cmd.date|date:"H:i" }} — Commande #{{ cmd.id }}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="text-[10px] text-gray-600 font-black uppercase mb-1">Total</p>
+                <p class="text-4xl font-black text-white tracking-tighter">
+                  {{ cmd.total|floatformat:0 }}<span class="text-sm text-green-500 ml-1">FG</span>
+                </p>
+              </div>
+            </div>
+
+            {# Liste des plats — lecture seule #}
+            <div class="space-y-2 mb-6 relative z-10">
+              {% for item in cmd.items.all %}
+              <div class="flex items-center justify-between bg-black/20 rounded-2xl px-5 py-3 border border-white/5">
+                <span class="text-gray-300 text-sm font-medium">
+                  <b class="text-yellow-400 text-base">×{{ item.quantite }}</b>
+                  <span class="ml-2">{{ item.plat.nom }}</span>
+                </span>
+                <span class="text-gray-500 text-xs font-mono">{{ item.montant }} FG</span>
+              </div>
+              {% endfor %}
+            </div>
+
+            {# Infos serveur si commande déjà servie #}
+            {% if cmd.serveur %}
+            <div class="flex items-center gap-3 bg-blue-500/5 border border-blue-500/10 rounded-2xl px-5 py-3 relative z-10">
+              <div class="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400 text-xs font-black border border-blue-500/20">
+                {{ cmd.serveur.identifiant|first|upper }}
+              </div>
+              <p class="text-[11px] text-gray-400 font-bold">
+                Servi par <span class="text-blue-400 font-black">@{{ cmd.serveur.identifiant }}</span>
+              </p>
+            </div>
+            {% endif %}
+
+            {# Badge lecture seule #}
+            <div class="absolute top-6 right-6 z-10">
+              <span class="text-[9px] font-black text-gray-600 uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+                👁 Lecture seule
+              </span>
+            </div>
+
+            <div class="absolute -bottom-8 -right-8 w-40 h-40
+              {% if cmd.statut == 'en_attente' %}bg-yellow-500/5{% else %}bg-blue-500/5{% endif %}
+              rounded-full blur-2xl"></div>
+          </div>
+          {% endfor %}
+        </div>
+
+        {% else %}
+        <div class="py-32 text-center bg-gray-900/20 rounded-[3rem] border border-dashed border-white/5">
+          <p class="text-5xl mb-4 opacity-20">✅</p>
+          <p class="text-gray-600 italic font-medium">Aucune commande active en salle.</p>
+          <p class="text-gray-700 text-xs mt-2">Toutes les commandes sont traitées.</p>
+        </div>
+        {% endif %}
       </section>
 
+      {# ════════════════════════════════════════════════ #}
+      {# SECTION HISTORIQUE ENRICHI                        #}
+      {# ════════════════════════════════════════════════ #}
       <section id="historique" class="section-content hidden animate-fade-in">
-        <header class="mb-12">
-          <h1 class="text-5xl font-black tracking-tight mb-2">Historique <span class="text-blue-500">Journalier</span></h1>
-          <p class="text-gray-500 font-medium">Récapitulatif de tous les encaissements effectués aujourd'hui.</p>
+        <header class="mb-8">
+          <h1 class="text-5xl font-black tracking-tight mb-2">Historique <span class="text-blue-500">Complet</span></h1>
+          <p class="text-gray-500 font-medium">Tous les encaissements avec détail serveur, table et commande.</p>
         </header>
 
+        {# Stats rapides #}
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
+          <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-[2rem] p-6 text-center">
+            <p class="text-[10px] font-black uppercase tracking-widest text-emerald-500 mb-2">Recettes du jour</p>
+            <p class="text-3xl font-black text-white">{{ recette_du_jour|floatformat:0 }} <span class="text-sm text-emerald-500">FG</span></p>
+          </div>
+          <div class="bg-blue-500/10 border border-blue-500/20 rounded-[2rem] p-6 text-center">
+            <p class="text-[10px] font-black uppercase tracking-widest text-blue-400 mb-2">Transactions aujourd'hui</p>
+            <p class="text-3xl font-black text-white">{{ nb_paiements_today }}</p>
+          </div>
+          <div class="bg-red-500/10 border border-red-500/20 rounded-[2rem] p-6 text-center">
+            <p class="text-[10px] font-black uppercase tracking-widest text-red-400 mb-2">Total dépenses</p>
+            <p class="text-3xl font-black text-white">{{ total_depenses|floatformat:0 }} <span class="text-sm text-red-400">FG</span></p>
+          </div>
+        </div>
+
+        {# Tableau historique enrichi #}
         <div class="bg-gray-900/20 border border-white/5 rounded-[3rem] overflow-hidden">
           <table class="w-full text-left">
             <thead>
               <tr class="bg-white/5 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                <th class="px-8 py-6">ID / Heure</th>
+                <th class="px-8 py-6">Ticket</th>
                 <th class="px-8 py-6">Table</th>
-                <th class="px-8 py-6">Mode</th>
+                <th class="px-8 py-6">Plats commandes</th>
                 <th class="px-8 py-6">Serveur</th>
+                <th class="px-8 py-6">Mode</th>
+                <th class="px-8 py-6">Heure</th>
                 <th class="px-8 py-6 text-right">Montant</th>
+                {% if request.user.role == 'admin' or request.user.is_superuser %}
+                <th class="px-8 py-6 text-center">Action</th>
+                {% endif %}
               </tr>
             </thead>
             <tbody class="divide-y divide-white/5">
               {% for p in paiements %}
               <tr class="hover:bg-white/[0.02] transition-colors group">
+
+                {# ID + Date #}
                 <td class="px-8 py-6">
-                  <p class="font-bold text-white italic">#{{ p.commande.id }}</p>
-                  <p class="text-[10px] text-gray-500 font-black tracking-widest">{{ p.date|date:"H:i" }}</p>
+                  <p class="font-bold text-white italic text-lg">#{{ p.commande.id }}</p>
+                  <p class="text-[10px] text-gray-600 font-bold tracking-widest">{{ p.date|date:"d/m/Y" }}</p>
                 </td>
+
+                {# Table #}
                 <td class="px-8 py-6">
-                  <span class="text-blue-400 font-bold">Table {{ p.commande.tablette.table.numero_table }}</span>
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-yellow-500/10 rounded-xl flex items-center justify-center text-yellow-500 font-black border border-yellow-500/20">
+                      {{ p.commande.tablette.table.numero_table }}
+                    </div>
+                    <div>
+                      <p class="text-white font-bold text-sm">Table {{ p.commande.tablette.table.numero_table }}</p>
+                      <p class="text-[10px] text-gray-600">{{ p.commande.tablette.table.nombre_places }} places</p>
+                    </div>
+                  </div>
                 </td>
+
+                {# Plats commandés #}
+                <td class="px-8 py-6 max-w-[220px]">
+                  <div class="flex flex-wrap gap-1">
+                    {% for item in p.commande.items.all|slice:":3" %}
+                    <span class="text-[10px] bg-black/30 border border-white/5 px-2 py-1 rounded-lg text-gray-400">
+                      <b class="text-white">×{{ item.quantite }}</b> {{ item.plat.nom|truncatechars:12 }}
+                    </span>
+                    {% endfor %}
+                    {% if p.commande.items.count > 3 %}
+                    <span class="text-[9px] text-gray-600 font-black self-center">
+                      +{{ p.commande.items.count|add:"-3" }} autre(s)
+                    </span>
+                    {% endif %}
+                  </div>
+                </td>
+
+                {# Serveur #}
                 <td class="px-8 py-6">
-                  <span class="bg-black/40 border border-white/10 px-3 py-1 rounded-lg text-[10px] font-bold">
+                  {% if p.commande.serveur %}
+                  <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-400 border border-blue-500/20 text-xs font-black">
+                      {{ p.commande.serveur.identifiant|first|upper }}
+                    </div>
+                    <div>
+                      <p class="text-blue-400 font-bold text-sm">@{{ p.commande.serveur.identifiant }}</p>
+                      <p class="text-[10px] text-gray-600">Serveur</p>
+                    </div>
+                  </div>
+                  {% else %}
+                  <span class="text-gray-700 italic text-xs">—</span>
+                  {% endif %}
+                </td>
+
+                {# Mode paiement #}
+                <td class="px-8 py-6">
+                  <span class="bg-black/40 border border-white/10 px-3 py-2 rounded-xl text-[10px] font-black text-gray-300">
                     {% if p.mode == 'cash' %}💵 CASH{% else %}📱 OM{% endif %}
                   </span>
                 </td>
+
+                {# Heure #}
                 <td class="px-8 py-6">
-                  <p class="text-sm font-medium text-gray-400">@{{ p.commande.serveur.identifiant }}</p>
+                  <p class="text-gray-400 font-mono text-sm">{{ p.date|date:"H:i" }}</p>
                 </td>
+
+                {# Montant #}
                 <td class="px-8 py-6 text-right">
-                  <p class="text-xl font-black text-emerald-500 tracking-tighter">+ {{ p.montant }} FG</p>
+                  <p class="text-2xl font-black text-emerald-500 tracking-tighter">
+                    + {{ p.montant|floatformat:0 }}
+                    <span class="text-xs font-light text-gray-600">FG</span>
+                  </p>
+                </td>
+
+                {# Supprimer paiement — admin uniquement #}
+                {% if request.user.role == 'admin' or request.user.is_superuser %}
+                <td class="px-8 py-6 text-center">
+                  <form method="POST" action="{% url 'supprimer_paiement' p.id %}"
+                        onsubmit="return confirm('Supprimer ce paiement ? {{ p.montant }} FG seront retires du solde.')">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="w-10 h-10 flex items-center justify-center text-gray-700 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all border border-transparent hover:border-red-500/20 mx-auto">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                    </button>
+                  </form>
+                </td>
+                {% endif %}
+              </tr>
+
+              {# Ligne détail dépliée : afficher tous les plats au survol (tooltip) #}
+              {% if p.commande.items.count > 3 %}
+              <tr class="bg-black/20 border-none">
+                <td colspan="7" class="px-8 pb-4">
+                  <div class="flex flex-wrap gap-1 pl-4 border-l-2 border-yellow-500/20">
+                    <span class="text-[9px] text-gray-600 font-black uppercase mr-2 self-center">Tous les plats :</span>
+                    {% for item in p.commande.items.all %}
+                    <span class="text-[10px] bg-black/30 border border-white/5 px-2 py-1 rounded-lg text-gray-400">
+                      <b class="text-white">×{{ item.quantite }}</b> {{ item.plat.nom }} — {{ item.montant }} FG
+                    </span>
+                    {% endfor %}
+                  </div>
                 </td>
               </tr>
+              {% endif %}
+
               {% empty %}
               <tr>
-                <td colspan="5" class="px-8 py-20 text-center text-gray-600 italic">Aucun paiement encaissé aujourd'hui.</td>
+                <td colspan="7" class="px-8 py-20 text-center text-gray-600 italic">
+                  Aucun paiement enregistré.
+                </td>
               </tr>
               {% endfor %}
             </tbody>
@@ -119,27 +310,88 @@
         </div>
       </section>
 
+      {# ════════════════════════════════════════════════ #}
+      {# SECTION CAISSE                                   #}
+      {# ════════════════════════════════════════════════ #}
       <section id="caisse" class="section-content hidden animate-fade-in">
         <h1 class="text-5xl font-black mb-12 tracking-tight italic">Caisse <span class="text-emerald-500">Live</span></h1>
         <div class="grid gap-8 lg:grid-cols-3">
+
           <div class="lg:col-span-2 bg-gradient-to-br from-emerald-600 to-green-800 p-16 rounded-[4rem] shadow-2xl relative overflow-hidden">
             <div class="relative z-10">
-              <p class="text-white/60 uppercase font-black tracking-[0.3em] text-[10px] mb-4">Solde Réel en Caisse</p>
-              <h2 class="text-8xl font-black text-white tracking-tighter mb-10">{{ solde }} <span class="text-3xl font-light opacity-50">FG</span></h2>
-              <div class="bg-black/20 inline-block px-6 py-3 rounded-2xl text-[10px] font-black text-white italic">Mis à jour : {% now "H:i" %}</div>
+              <p class="text-white/60 uppercase font-black tracking-[0.3em] text-[10px] mb-4">Solde Reel en Caisse</p>
+              <h2 class="text-8xl font-black text-white tracking-tighter mb-10">
+                {{ solde|floatformat:0 }}
+                <span class="text-3xl font-light opacity-50">FG</span>
+              </h2>
+              <div class="bg-black/20 inline-block px-6 py-3 rounded-2xl text-[10px] font-black text-white italic">
+                Mis a jour automatiquement
+              </div>
+            </div>
+            <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
+          </div>
+
+          <div class="space-y-4">
+            <div class="bg-gray-900/50 border border-white/5 p-8 rounded-[2.5rem] text-center">
+              <p class="text-gray-500 font-black uppercase text-[10px] mb-3 tracking-widest">Encaissements totaux</p>
+              <p class="text-5xl font-black text-white tracking-tighter">{{ paiements|length }}</p>
+            </div>
+            <div class="bg-emerald-500/10 border border-emerald-500/20 p-6 rounded-[2rem] text-center">
+              <p class="text-emerald-500 font-black uppercase text-[10px] mb-2 tracking-widest">Recettes du jour</p>
+              <p class="text-3xl font-black text-white">{{ recette_du_jour|floatformat:0 }} <span class="text-sm text-emerald-500">FG</span></p>
+            </div>
+            <div class="bg-red-500/10 border border-red-500/20 p-6 rounded-[2rem] text-center">
+              <p class="text-red-400 font-black uppercase text-[10px] mb-2 tracking-widest">Total depenses</p>
+              <p class="text-3xl font-black text-white">{{ total_depenses|floatformat:0 }} <span class="text-sm text-red-400">FG</span></p>
             </div>
           </div>
-          <div class="bg-gray-900/50 border border-white/5 p-10 rounded-[3rem] text-center flex flex-col justify-center">
-            <p class="text-gray-500 font-black uppercase text-[10px] mb-4 tracking-widest">Total Encaissements</p>
-            <p class="text-6xl font-black text-white tracking-tighter">{{ paiements|length }}</p>
+        </div>
+
+        {# Actions admin sur la caisse #}
+        {% if request.user.role == 'admin' or request.user.is_superuser %}
+        <div class="mt-10 bg-red-500/5 border border-red-500/10 rounded-[3rem] p-8">
+          <div class="flex items-center gap-3 mb-6">
+            <span class="text-red-500 text-xl">⚙️</span>
+            <h3 class="text-red-400 font-black uppercase text-sm tracking-widest">Actions Administrateur</h3>
+          </div>
+          <div class="flex flex-wrap gap-4">
+
+            {# Reinitialiser le solde #}
+            <form method="POST" action="{% url 'reinitialiser_solde' %}"
+                  onsubmit="return confirm('Reinitialiser le solde a 0 FG ? Cette action est irreversible.')">
+              {% csrf_token %}
+              <button type="submit"
+                      class="flex items-center gap-2 bg-orange-500/10 hover:bg-orange-500 text-orange-400 hover:text-white px-6 py-4 rounded-2xl border border-orange-500/20 font-black text-xs uppercase tracking-widest transition-all">
+                🔄 Reinitialiser le solde
+              </button>
+            </form>
+
+            {# Vider tous les paiements #}
+            <form method="POST" action="{% url 'admin_tout_supprimer' %}"
+                  onsubmit="return confirm('ATTENTION : Supprimer TOUS les paiements de l historique ? Le solde sera ajuste.')">
+              {% csrf_token %}
+              <input type="hidden" name="type" value="paiements">
+              <button type="submit"
+                      class="flex items-center gap-2 bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white px-6 py-4 rounded-2xl border border-red-500/20 font-black text-xs uppercase tracking-widest transition-all">
+                🗑 Vider l historique paiements
+              </button>
+            </form>
+
           </div>
         </div>
+        {% endif %}
+
       </section>
 
+      {# ════════════════════════════════════════════════ #}
+      {# SECTION DÉPENSES                                 #}
+      {# ════════════════════════════════════════════════ #}
       <section id="depenses" class="section-content hidden animate-fade-in">
         <header class="flex justify-between items-end mb-12">
-            <h1 class="text-5xl font-black tracking-tight italic">Sorties <span class="text-red-500">Caisse</span></h1>
-            <div class="bg-red-500 text-white px-8 py-4 rounded-[2rem] font-black text-xs uppercase tracking-widest">{{ depenses|length }} fiches</div>
+          <h1 class="text-5xl font-black tracking-tight italic">Sorties <span class="text-red-500">Caisse</span></h1>
+          <div class="bg-red-500 text-white px-8 py-4 rounded-[2rem] font-black text-xs uppercase tracking-widest">
+            {{ depenses|length }} fiches
+          </div>
         </header>
 
         <div class="bg-gray-900/30 border border-white/5 p-10 rounded-[3rem] mb-16 shadow-2xl">
@@ -148,66 +400,123 @@
             <input type="hidden" name="ajouter_depense" value="1">
             <div class="lg:col-span-1">
               <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-4 mb-3 block">Désignation</label>
-              <input type="text" name="description" placeholder="Objet..." required class="w-full bg-black/40 border-none ring-1 ring-white/10 px-6 py-5 rounded-[2rem] outline-none font-bold text-sm">
+              <input type="text" name="description" placeholder="Objet..." required
+                     class="w-full bg-black/40 border-none ring-1 ring-white/10 px-6 py-5 rounded-[2rem] outline-none font-bold text-sm text-white">
             </div>
             <div>
               <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-4 mb-3 block">Valeur (FG)</label>
-              <input type="number" name="montant" placeholder="0000" required class="w-full bg-black/40 border-none ring-1 ring-white/10 px-6 py-5 rounded-[2rem] outline-none font-bold text-sm">
+              <input type="number" name="montant" placeholder="0000" required
+                     class="w-full bg-black/40 border-none ring-1 ring-white/10 px-6 py-5 rounded-[2rem] outline-none font-bold text-sm text-white">
             </div>
             <div>
               <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-4 mb-3 block">Catégorie</label>
-              <select name="categorie" class="w-full bg-black/40 border-none ring-1 ring-white/10 px-6 py-5 rounded-[2rem] outline-none font-bold text-sm appearance-none cursor-pointer">
+              <select name="categorie"
+                      class="w-full bg-black/40 border-none ring-1 ring-white/10 px-6 py-5 rounded-[2rem] outline-none font-bold text-sm text-white appearance-none cursor-pointer">
                 <option value="Achats">🛒 ACHATS MARCHÉ</option>
                 <option value="Salaires">👥 PERSONNEL</option>
                 <option value="Factures">⚡ FACTURES / TAXES</option>
                 <option value="Divers">📦 DIVERS</option>
               </select>
             </div>
-            <button type="submit" class="bg-white text-black py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-xl shadow-black/20">ENREGISTRER</button>
+            <button type="submit"
+                    class="bg-white text-black py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-xl">
+              ENREGISTRER
+            </button>
           </form>
         </div>
 
         <div class="grid gap-6">
           {% for d in depenses %}
-          <div class="group bg-gray-900/20 border border-white/5 rounded-[2.5rem] p-8 flex items-center justify-between transition-all hover:bg-gray-900/50 shadow-lg">
-            <div class="flex items-center gap-8">
-              <div class="w-20 h-20 bg-black/60 rounded-3xl flex items-center justify-center text-3xl">
-                {% if d.categorie == "Achats" %}🛒{% elif d.categorie == "Salaires" %}👥{% elif d.categorie == "Factures" %}⚡{% else %}📦{% endif %}
+          <div class="group bg-gray-900/20 border border-white/5 rounded-[2.5rem] p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 transition-all hover:bg-gray-900/50 shadow-lg">
+
+            {# Partie gauche : icone + infos #}
+            <div class="flex items-center gap-6 flex-1 min-w-0">
+              <div class="w-16 h-16 sm:w-20 sm:h-20 bg-black/60 rounded-3xl flex items-center justify-center text-3xl flex-shrink-0">
+                {% if d.categorie == "Achats" %}🛒
+                {% elif d.categorie == "Salaires" %}👥
+                {% elif d.categorie == "Factures" %}⚡
+                {% else %}📦{% endif %}
               </div>
-              <div>
-                <h3 class="text-2xl font-black text-white mb-2">{{ d.description }}</h3>
-                <span class="text-[9px] font-black text-red-500 uppercase tracking-widest bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20">{{ d.categorie }}</span>
+              <div class="min-w-0">
+                <h3 class="text-xl sm:text-2xl font-black text-white mb-3 truncate">{{ d.description }}</h3>
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="text-[10px] font-black text-red-400 uppercase tracking-widest bg-red-500/10 px-3 py-1.5 rounded-full border border-red-500/20">
+                    {{ d.categorie }}
+                  </span>
+                  {% if d.utilisateur %}
+                  <span class="flex items-center gap-1.5 bg-purple-500/10 border border-purple-500/20 px-3 py-1.5 rounded-full">
+                    <div class="w-4 h-4 bg-purple-500/30 rounded-full flex items-center justify-center text-purple-400 text-[9px] font-black">
+                      {{ d.utilisateur.identifiant|first|upper }}
+                    </div>
+                    <span class="text-[10px] font-black text-purple-400 uppercase tracking-wider">@{{ d.utilisateur.identifiant }}</span>
+                  </span>
+                  {% else %}
+                  <span class="text-[10px] text-gray-700 italic px-3 py-1.5 bg-white/5 rounded-full border border-white/5">Auteur inconnu</span>
+                  {% endif %}
+                  <span class="text-[10px] text-gray-600 font-bold bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+                    🕐 {{ d.date|date:"d/m/Y a H:i" }}
+                  </span>
+                </div>
               </div>
             </div>
-            <div class="flex items-center gap-10">
-              <span class="text-4xl font-black text-white tracking-tighter">- {{ d.montant }} <span class="text-xs font-light text-gray-600">FG</span></span>
-              <button onclick="confirmDeletion('{{ d.id }}', 'depense', '{{ d.description|escapejs }}')" class="w-12 h-12 flex items-center justify-center text-gray-700 hover:text-red-500 transition-all">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-              </button>
+
+            {# Partie droite : montant + supprimer (admin only) #}
+            <div class="flex items-center justify-between sm:justify-end gap-8 flex-shrink-0">
+              <div class="text-right">
+                <p class="text-[10px] text-gray-600 font-black uppercase tracking-widest mb-1">Sortie</p>
+                <span class="text-3xl sm:text-4xl font-black text-red-400 tracking-tighter">
+                  — {{ d.montant|floatformat:0 }}
+                  <span class="text-sm font-light text-gray-600">FG</span>
+                </span>
+              </div>
+
+              {# Bouton supprimer — admin uniquement #}
+              {% if request.user.role == 'admin' or request.user.is_superuser %}
+              <form method="POST" action="{% url 'supprimer_depense' d.id %}"
+                    onsubmit="return confirm('Supprimer cette depense et reintegrer {{ d.montant }} FG au solde ?')">
+                {% csrf_token %}
+                <button type="submit"
+                        class="w-12 h-12 flex-shrink-0 flex items-center justify-center text-gray-700 hover:text-red-500 hover:bg-red-500/10 rounded-2xl transition-all border border-transparent hover:border-red-500/20">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              </form>
+              {% else %}
+              <div class="w-12 h-12"></div>
+              {% endif %}
             </div>
+
+          </div>
+          {% empty %}
+          <div class="py-20 text-center bg-gray-900/10 rounded-[3rem] border border-dashed border-white/5">
+            <p class="text-gray-600 italic">Aucune depense enregistree.</p>
           </div>
           {% endfor %}
         </div>
+
+        {# Bouton tout supprimer — admin uniquement #}
+        {% if request.user.role == 'admin' or request.user.is_superuser %}
+        {% if depenses %}
+        <div class="mt-8 flex justify-end">
+          <form method="POST" action="{% url 'admin_tout_supprimer' %}"
+                onsubmit="return confirm('ATTENTION : Supprimer TOUTES les depenses ? Les montants seront reintegres au solde.')">
+            {% csrf_token %}
+            <input type="hidden" name="type" value="depenses">
+            <button type="submit"
+                    class="flex items-center gap-2 bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white px-6 py-3 rounded-2xl border border-red-500/20 font-black text-xs uppercase tracking-widest transition-all">
+              🗑 Vider toutes les depenses
+            </button>
+          </form>
+        </div>
+        {% endif %}
+        {% endif %}
       </section>
 
     </main>
   </div>
 </div>
 
-<div id="deleteModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-xl">
-  <div class="bg-gray-950 border border-white/10 w-full max-w-md rounded-[4rem] p-12 text-center animate-scale-up">
-    <div class="w-24 h-24 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-8">
-        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
-    </div>
-    <h3 class="text-3xl font-black text-white mb-4 italic tracking-tighter">ALERTE !</h3>
-    <p id="deleteMsg" class="text-gray-400 text-sm mb-12 font-medium"></p>
-    <form id="deleteForm" method="post" class="space-y-4">
-      {% csrf_token %}
-      <button type="submit" class="w-full bg-red-600 text-white py-6 rounded-[2rem] font-black uppercase text-xs tracking-[0.3em] active:scale-95 transition-all">CONFIRMER</button>
-      <button type="button" onclick="closeModal()" class="w-full py-4 text-gray-600 font-black text-[10px] uppercase tracking-widest">ANNULER</button>
-    </form>
-  </div>
-</div>
 
 <style>
   @keyframes fade-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -223,18 +532,18 @@ function showSection(id, btn) {
   document.querySelectorAll('.nav-btn').forEach(b => {
     b.className = "nav-btn w-full flex items-center gap-4 px-6 py-5 rounded-[2rem] bg-gray-900/50 text-gray-400 font-semibold transition-all hover:bg-gray-800 hover:text-white";
   });
-  btn.className = "nav-btn w-full flex items-center justify-between px-6 py-5 rounded-[2rem] bg-green-600 text-white font-bold transition-all shadow-2xl shadow-green-900/40";
+  if (btn) {
+    btn.className = "nav-btn w-full flex items-center justify-between px-6 py-5 rounded-[2rem] bg-green-600 text-white font-bold transition-all shadow-2xl shadow-green-900/40";
+  }
 }
 
-function confirmDeletion(id, type, name) {
-  const modal = document.getElementById('deleteModal');
-  const form = document.getElementById('deleteForm');
-  const msg = document.getElementById('deleteMsg');
-  modal.classList.remove('hidden');
-  msg.innerText = `L'action sur "${name}" supprimera les données définitivement.`;
-  form.action = type === 'commande' ? `/compta/commande/supprimer/${id}/` : `/compta/depense/supprimer/${id}/`;
-}
-
-function closeModal() { document.getElementById('deleteModal').classList.add('hidden'); }
+document.addEventListener('DOMContentLoaded', function() {
+  const hash = window.location.hash.replace('#', '');
+  if (hash && document.getElementById(hash)) {
+    showSection(hash, document.getElementById('btn-' + hash));
+  } else {
+    showSection('mises_a_jour', document.getElementById('btn-mises_a_jour'));
+  }
+});
 </script>
 {% endblock %}

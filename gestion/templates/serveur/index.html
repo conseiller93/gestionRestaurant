@@ -8,7 +8,9 @@
     <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
         <div>
             <span class="text-yellow-500 font-bold uppercase tracking-[0.3em] text-xs italic">Gestion de Salle</span>
-            <h1 class="text-6xl font-black text-white italic tracking-tighter">ESPACE <span class="text-yellow-400">SERVEUR</span></h1>
+            <h1 class="text-6xl font-black text-white italic tracking-tighter">
+                ESPACE <span class="text-yellow-400">SERVEUR</span>
+            </h1>
         </div>
         <div class="bg-gray-800/40 backdrop-blur-xl px-8 py-4 rounded-[2rem] border border-white/5 flex items-center gap-4 shadow-2xl">
             <div class="w-4 h-4 bg-blue-500 rounded-full animate-pulse shadow-[0_0_15px_rgba(59,130,246,0.5)]"></div>
@@ -16,6 +18,20 @@
         </div>
     </div>
 
+    {# Flash messages #}
+    {% if messages %}
+    <div class="mb-8 space-y-3">
+        {% for message in messages %}
+        <div class="px-6 py-4 rounded-2xl text-sm font-bold border
+            {% if message.tags == 'success' %}bg-green-900/40 text-green-400 border-green-500/20
+            {% else %}bg-red-900/40 text-red-400 border-red-500/20{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {# ── ÉTAT DES TABLES ── #}
     <section class="mb-16">
         <h2 class="text-2xl font-black text-gray-400 mb-8 flex items-center gap-4">
             <span class="bg-gray-800 p-3 rounded-2xl">📍</span> Suivi des Tables
@@ -24,29 +40,25 @@
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8">
             {% for t in tables_context %}
             <div class="relative overflow-hidden rounded-[2.5rem] p-8 transition-all duration-500 border-4 shadow-2xl
-                {% if t.etat == 'libre' %} bg-green-950/10 border-green-500/20 hover:border-green-500/60
-                {% elif t.etat == 'en_attente' %} bg-yellow-950/10 border-yellow-500/20 hover:border-yellow-500/60
-                {% elif t.etat == 'servie' %} bg-blue-950/10 border-blue-500/20 hover:border-blue-500/60
-                {% else %} bg-gray-800/40 border-gray-700
-                {% endif %}
-            ">
+                {% if t.etat == 'libre' %}bg-green-950/10 border-green-500/20 hover:border-green-500/60
+                {% elif t.etat == 'en_attente' %}bg-yellow-950/10 border-yellow-500/40 hover:border-yellow-500/80
+                {% elif t.etat == 'servie' %}bg-blue-950/10 border-blue-500/40 hover:border-blue-500/80
+                {% else %}bg-gray-800/40 border-gray-700{% endif %}">
+
                 <div class="relative z-10">
-                    <p class="text-[10px] uppercase font-black tracking-[0.2em] text-gray-500 mb-2">Emplacement</p>
+                    <p class="text-[10px] uppercase font-black tracking-[0.2em] text-gray-500 mb-2">Table</p>
                     <p class="text-5xl font-black text-white mb-3 tracking-tighter">{{ t.table.numero_table }}</p>
                     <p class="text-sm text-gray-400 font-bold mb-6 italic">{{ t.table.nombre_places }} couverts</p>
-                    
-                    <span class="inline-flex items-center px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest
-                        {% if t.etat == 'libre' %} bg-green-500 text-black
-                        {% elif t.etat == 'en_attente' %} bg-yellow-500 text-black
-                        {% elif t.etat == 'servie' %} bg-blue-500 text-white
-                        {% else %} bg-gray-700 text-gray-300
-                        {% endif %}
-                     shadow-lg">
-                        {% if t.etat == 'libre' %}Libre
-                        {% elif t.etat == 'en_attente' %}En cuisine
-                        {% elif t.etat == 'servie' %}À servir
-                        {% else %}Libre
-                        {% endif %}
+
+                    <span class="inline-flex items-center px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg
+                        {% if t.etat == 'libre' %}bg-green-500 text-black
+                        {% elif t.etat == 'en_attente' %}bg-yellow-500 text-black
+                        {% elif t.etat == 'servie' %}bg-blue-500 text-white
+                        {% else %}bg-gray-700 text-gray-300{% endif %}">
+                        {% if t.etat == 'libre' %}✅ Libre
+                        {% elif t.etat == 'en_attente' %}⏳ En cuisine
+                        {% elif t.etat == 'servie' %}🍽️ À encaisser
+                        {% else %}Libre{% endif %}
                     </span>
                 </div>
                 <div class="absolute -bottom-4 -right-4 text-9xl opacity-5 font-black italic select-none">
@@ -57,67 +69,102 @@
         </div>
     </section>
 
+    {# ── COMMANDES ACTIVES ── #}
     <section>
         <h2 class="text-2xl font-black text-gray-400 mb-8 flex items-center gap-4">
             <span class="bg-gray-800 p-3 rounded-2xl">📋</span> Commandes Actives
         </h2>
 
         {% if commandes %}
-        <div class="bg-gray-900/40 backdrop-blur-md rounded-[3rem] border border-white/5 shadow-3xl overflow-hidden">
+        <div class="bg-gray-900/40 backdrop-blur-md rounded-[3rem] border border-white/5 shadow-2xl overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-white/5 border-b border-white/5">
                             <th class="px-8 py-6 text-xs font-black text-gray-500 uppercase tracking-widest">ID</th>
                             <th class="px-8 py-6 text-xs font-black text-gray-500 uppercase tracking-widest">Table</th>
-                            <th class="px-8 py-6 text-xs font-black text-gray-500 uppercase tracking-widest">Détails de la commande</th>
+                            <th class="px-8 py-6 text-xs font-black text-gray-500 uppercase tracking-widest">Plats commandés</th>
                             <th class="px-8 py-6 text-xs font-black text-gray-500 uppercase tracking-widest text-right">Total</th>
+                            <th class="px-8 py-6 text-xs font-black text-gray-500 uppercase tracking-widest text-center">Statut</th>
                             <th class="px-8 py-6 text-xs font-black text-gray-500 uppercase tracking-widest text-center">Action</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-white/5">
                         {% for cmd in commandes %}
                         <tr class="group hover:bg-white/[0.02] transition-all">
-                            <td class="px-8 py-8 font-mono text-gray-500 font-bold">#{{ cmd.id }}</td>
+
+                            <td class="px-8 py-8 font-mono text-yellow-500 font-bold text-lg">#{{ cmd.id }}</td>
+
                             <td class="px-8 py-8">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-12 h-12 bg-yellow-500/10 rounded-xl flex items-center justify-center text-yellow-500 font-black">
+                                    <div class="w-12 h-12 bg-yellow-500/10 rounded-xl flex items-center justify-center text-yellow-500 font-black border border-yellow-500/20">
                                         {{ cmd.tablette.table.numero_table }}
                                     </div>
-                                    <span class="text-xl font-black text-white italic">Table {{ cmd.tablette.table.numero_table }}</span>
+                                    <div>
+                                        <span class="text-xl font-black text-white italic">Table {{ cmd.tablette.table.numero_table }}</span>
+                                        <p class="text-[10px] text-gray-600">{{ cmd.date|date:"H:i" }}</p>
+                                    </div>
                                 </div>
                             </td>
+
                             <td class="px-8 py-8">
-                                <div class="flex flex-wrap gap-3">
+                                <div class="flex flex-wrap gap-2">
                                     {% for item in cmd.items.all %}
-                                    <span class="inline-flex items-center bg-gray-800 text-gray-100 text-sm px-4 py-2 rounded-2xl border border-white/10 shadow-sm">
-                                        <b class="text-yellow-400 text-lg mr-2">{{ item.quantite }}x</b> 
-                                        <span class="font-bold tracking-tight">{{ item.plat.nom }}</span>
+                                    <span class="inline-flex items-center bg-gray-800 text-gray-100 text-sm px-3 py-1.5 rounded-xl border border-white/10 shadow-sm">
+                                        <b class="text-yellow-400 mr-1.5">×{{ item.quantite }}</b>
+                                        <span class="font-bold">{{ item.plat.nom }}</span>
                                     </span>
                                     {% endfor %}
                                 </div>
                             </td>
+
                             <td class="px-8 py-8 text-right">
-                                <span class="text-3xl font-black text-white tracking-tighter">{{ cmd.total }} <span class="text-sm text-gray-500 font-light">FG</span></span>
+                                <span class="text-3xl font-black text-white tracking-tighter">
+                                    {{ cmd.total|floatformat:0 }}
+                                    <span class="text-sm text-gray-500 font-light">FG</span>
+                                </span>
                             </td>
-                            <td class="px-8 py-8">
-                                <div class="flex justify-center">
-                                    {% if cmd.statut == 'en_attente' %}
-                                        <form method="POST" action="{% url 'serveur_valider_commande' cmd.id %}" @submit="loading = true" class="w-full max-w-[150px]">
-                                            {% csrf_token %}
-                                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-black uppercase tracking-widest transition-all hover:scale-105 shadow-xl shadow-blue-900/40 text-xs">
-                                                🚀 Servir
-                                            </button>
-                                        </form>
-                                    {% elif cmd.statut == 'servie' %}
-                                        <form method="POST" action="{% url 'serveur_valider_paiement' cmd.id %}" @submit="loading = true" class="w-full max-w-[150px]">
-                                            {% csrf_token %}
-                                            <button type="submit" class="w-full bg-green-600 hover:bg-green-500 text-white py-4 rounded-2xl font-black uppercase tracking-widest transition-all hover:scale-105 shadow-xl shadow-green-900/40 text-xs">
-                                                💵 Encaisser
-                                            </button>
-                                        </form>
-                                    {% endif %}
-                                </div>
+
+                            <td class="px-8 py-8 text-center">
+                                {% if cmd.statut == 'en_attente' %}
+                                <span class="px-4 py-2 bg-yellow-500/10 text-yellow-500 text-[10px] font-black rounded-full border border-yellow-500/20 uppercase">
+                                    ⏳ Attente
+                                </span>
+                                {% elif cmd.statut == 'servie' %}
+                                <span class="px-4 py-2 bg-blue-500/10 text-blue-400 text-[10px] font-black rounded-full border border-blue-500/20 uppercase">
+                                    🍽️ Servie
+                                </span>
+                                {% endif %}
+                            </td>
+
+                            {# ── ACTIONS POST UNIQUEMENT ── #}
+                            <td class="px-8 py-8 text-center">
+                                {% if cmd.statut == 'en_attente' %}
+                                {# Bouton : Marquer comme servie (POST) #}
+                                <form method="POST"
+                                      action="{% url 'serveur_valider_commande' cmd.id %}"
+                                      @submit="loading = true"
+                                      onsubmit="return confirm('Confirmer que la commande #{{ cmd.id }} a été servie ?')">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                            class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest transition-all hover:scale-105 shadow-xl shadow-blue-900/40 text-xs w-full">
+                                        🚀 Marquer servie
+                                    </button>
+                                </form>
+
+                                {% elif cmd.statut == 'servie' %}
+                                {# Bouton : Encaisser / Marquer payée (POST) #}
+                                <form method="POST"
+                                      action="{% url 'serveur_valider_paiement' cmd.id %}"
+                                      @submit="loading = true"
+                                      onsubmit="return confirm('Confirmer l\'encaissement de {{ cmd.total }} FG pour la commande #{{ cmd.id }} ?')">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                            class="bg-green-600 hover:bg-green-500 text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest transition-all hover:scale-105 shadow-xl shadow-green-900/40 text-xs w-full">
+                                        💵 Encaisser
+                                    </button>
+                                </form>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
@@ -125,6 +172,7 @@
                 </table>
             </div>
         </div>
+
         {% else %}
         <div class="bg-gray-900/20 border-2 border-dashed border-white/5 rounded-[3rem] py-32 text-center">
             <div class="text-8xl mb-6 opacity-10">🍽️</div>
@@ -133,10 +181,15 @@
         {% endif %}
     </section>
 
-    <div x-show="loading" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[999] flex items-center justify-center" style="display: none;">
+    {# Overlay chargement #}
+    <div x-show="loading"
+         class="fixed inset-0 bg-black/90 backdrop-blur-md z-[999] flex items-center justify-center"
+         style="display: none;">
         <div class="flex flex-col items-center">
             <div class="w-20 h-20 border-8 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
-            <p class="text-white mt-8 font-black uppercase tracking-[0.5em] text-sm animate-pulse">Mise à jour du système...</p>
+            <p class="text-white mt-8 font-black uppercase tracking-[0.5em] text-sm animate-pulse">
+                Mise à jour…
+            </p>
         </div>
     </div>
 

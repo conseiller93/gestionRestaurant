@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Gestion des Flux - Zenith Restaurant{% endblock %}
+{% block title %}Central Commandes{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 py-8" x-data="{ loading: false }">
@@ -14,11 +14,11 @@
                 </span>
             </div>
             <h1 class="text-6xl font-black text-white italic tracking-tighter">
-                CENTRAL <span class="text-yellow-400 text-outline">COMMANDES</span>
+                CENTRAL <span class="text-yellow-400">COMMANDES</span>
             </h1>
         </div>
-        
-        <div class="flex gap-4">
+
+        <div class="flex items-center gap-4">
             <div class="bg-white/5 backdrop-blur-xl px-6 py-4 rounded-3xl border border-white/10 flex items-center gap-4">
                 <div class="text-right border-r border-white/10 pr-4">
                     <p class="text-[9px] text-gray-500 uppercase font-black">Volume total</p>
@@ -28,8 +28,34 @@
                     <div class="h-3 w-3 bg-green-500 rounded-full animate-ping"></div>
                 </div>
             </div>
+
+            {# Bouton suppression totale — admin uniquement #}
+            {% if user.role == 'admin' or user.is_superuser %}
+            <form method="POST" action="{% url 'admin_tout_supprimer' %}"
+                  onsubmit="return confirm('ATTENTION : Supprimer TOUTES les commandes ? Action irreversible.')">
+                {% csrf_token %}
+                <input type="hidden" name="type" value="commandes">
+                <button type="submit"
+                        class="flex items-center gap-2 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white px-5 py-4 rounded-2xl border border-red-500/30 font-black text-xs uppercase tracking-widest transition-all">
+                    🗑 Tout supprimer
+                </button>
+            </form>
+            {% endif %}
         </div>
     </div>
+
+    {# Messages #}
+    {% if messages %}
+    <div class="mb-6 space-y-2">
+        {% for message in messages %}
+        <div class="px-6 py-4 rounded-2xl text-sm font-bold border
+            {% if message.tags == 'success' %}bg-green-900/40 text-green-400 border-green-500/20
+            {% else %}bg-red-900/40 text-red-400 border-red-500/20{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 
     <div class="bg-gray-900/40 backdrop-blur-2xl rounded-[2.5rem] shadow-3xl border border-white/5 overflow-hidden">
         <div class="overflow-x-auto">
@@ -38,9 +64,7 @@
                     <tr class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">
                         <th class="px-6 py-4">Référence</th>
                         <th class="px-6 py-4">Table</th>
-                        {% if user.role != 'comptable' %}
                         <th class="px-6 py-4">Composition</th>
-                        {% endif %}
                         <th class="px-6 py-4 text-right">Montant</th>
                         <th class="px-6 py-4">Statut</th>
                         <th class="px-6 py-4 text-center">Actions</th>
@@ -49,8 +73,8 @@
 
                 <tbody class="text-gray-300">
                     {% for commande in commandes %}
-                    <tr class="group bg-white/[0.02] hover:bg-white/[0.05] transition-all duration-300 rounded-2xl shadow-sm">
-                        
+                    <tr class="group bg-white/[0.02] hover:bg-white/[0.05] transition-all duration-300 rounded-2xl">
+
                         <td class="px-6 py-5 first:rounded-l-2xl">
                             <span class="font-mono text-yellow-500 font-black text-lg">#{{ commande.id }}</span>
                             <p class="text-[10px] text-gray-600 font-bold uppercase">{{ commande.date|date:"H:i" }}</p>
@@ -61,11 +85,10 @@
                                 <div class="w-10 h-10 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center">
                                     <span class="text-yellow-500 font-black italic">{{ commande.tablette.table.numero_table }}</span>
                                 </div>
-                                <span class="text-white font-bold text-sm">SALLE</span>
+                                <span class="text-white font-bold text-sm">Table {{ commande.tablette.table.numero_table }}</span>
                             </div>
                         </td>
 
-                        {% if user.role != 'comptable' %}
                         <td class="px-6 py-5">
                             <div class="flex flex-wrap gap-1 max-w-[200px]">
                                 {% for item in commande.items.all|slice:":2" %}
@@ -74,47 +97,67 @@
                                 </span>
                                 {% endfor %}
                                 {% if commande.items.count > 2 %}
-                                <span class="text-[9px] text-gray-600 font-black">+{{ commande.items.count|add:"-2" }}</span>
+                                <span class="text-[9px] text-gray-600 font-black self-center">+{{ commande.items.count|add:"-2" }}</span>
                                 {% endif %}
                             </div>
                         </td>
-                        {% endif %}
 
                         <td class="px-6 py-5 text-right font-mono">
-                            <span class="text-xl font-black text-white">{{ commande.total }}</span>
+                            <span class="text-xl font-black text-white">{{ commande.total|floatformat:0 }}</span>
                             <small class="text-[9px] text-yellow-600 font-black">FG</small>
                         </td>
 
                         <td class="px-6 py-5">
                             {% if commande.statut == 'en_attente' %}
-                                <span class="px-3 py-1 bg-yellow-500/10 text-yellow-500 text-[10px] font-black rounded-full border border-yellow-500/20">ATTENTE</span>
+                            <span class="px-3 py-1 bg-yellow-500/10 text-yellow-500 text-[10px] font-black rounded-full border border-yellow-500/20">ATTENTE</span>
                             {% elif commande.statut == 'servie' %}
-                                <span class="px-3 py-1 bg-blue-500/10 text-blue-400 text-[10px] font-black rounded-full border border-blue-500/20">SERVIE</span>
+                            <span class="px-3 py-1 bg-blue-500/10 text-blue-400 text-[10px] font-black rounded-full border border-blue-500/20">SERVIE</span>
                             {% else %}
-                                <span class="px-3 py-1 bg-green-500/10 text-green-400 text-[10px] font-black rounded-full border border-green-500/20">PAYÉE</span>
+                            <span class="px-3 py-1 bg-green-500/10 text-green-400 text-[10px] font-black rounded-full border border-green-500/20">PAYEE</span>
                             {% endif %}
                         </td>
 
                         <td class="px-6 py-5 text-center last:rounded-r-2xl">
                             <div class="flex items-center justify-center gap-2">
-                                <button onclick="openDetailsModal('{{ commande.id }}', '{{ commande.tablette.table.numero_table }}', '{{ commande.total }}', '{{ commande.statut }}', '{{ commande.date|date:'d/m/Y H:i' }}', `{% for item in commande.items.all %}<div class='flex justify-between py-2 border-b border-white/5'><span>{{ item.plat.nom }}</span><span class='font-black text-yellow-500'>x{{ item.quantite }}</span></div>{% endfor %}`)" 
+
+                                {# Voir détails — tous les rôles #}
+                                <button onclick="openDetailsModal('{{ commande.id }}', '{{ commande.tablette.table.numero_table }}', '{{ commande.total }}', '{{ commande.statut }}', '{{ commande.date|date:'d/m/Y H:i' }}', `{% for item in commande.items.all %}<div class='flex justify-between py-2 border-b border-white/5'><span>{{ item.plat.nom }}</span><span class='font-black text-yellow-500'>x{{ item.quantite }}</span></div>{% endfor %}`)"
                                         class="p-2 hover:bg-yellow-500 hover:text-black rounded-lg transition-all border border-white/5 bg-white/5 text-white">
                                     👁
                                 </button>
 
-                                {% if user.role == 'serveur' or user.is_superuser %}
+                                {# Serveur : marquer servie #}
+                                {% if user.role == 'serveur' %}
                                     {% if commande.statut == 'en_attente' %}
-                                    <a href="{% url 'serveur_valider_commande' commande.id %}" class="p-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white rounded-lg transition-all border border-blue-500/30">🍽️</a>
+                                    <form method="POST" action="{% url 'serveur_valider_commande' commande.id %}"
+                                          onsubmit="return confirm('Marquer la commande #{{ commande.id }} comme servie ?')">
+                                        {% csrf_token %}
+                                        <button type="submit" class="p-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white rounded-lg border border-blue-500/30">🍽️</button>
+                                    </form>
                                     {% elif commande.statut == 'servie' %}
-                                    <a href="{% url 'serveur_valider_paiement' commande.id %}" class="p-2 bg-green-500/20 text-green-400 hover:bg-green-500 hover:text-white rounded-lg transition-all border border-green-500/30">💰</a>
+                                    <form method="POST" action="{% url 'serveur_valider_paiement' commande.id %}"
+                                          onsubmit="return confirm('Encaisser {{ commande.total }} FG pour la commande #{{ commande.id }} ?')">
+                                        {% csrf_token %}
+                                        <button type="submit" class="p-2 bg-green-500/20 text-green-400 hover:bg-green-500 hover:text-white rounded-lg border border-green-500/30">💰</button>
+                                    </form>
                                     {% endif %}
                                 {% endif %}
 
+                                {# Supprimer — admin uniquement #}
                                 {% if user.role == 'admin' or user.is_superuser %}
-                                <a href="{% url 'supprimer_commande' commande.id %}" class="p-2 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-lg border border-red-500/20">🗑</a>
+                                <form method="POST" action="{% url 'supprimer_commande' commande.id %}"
+                                      onsubmit="return confirm('Supprimer definitivement la commande #{{ commande.id }} ?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="p-2 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-lg border border-red-500/20">🗑</button>
+                                </form>
                                 {% endif %}
+
                             </div>
                         </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-20 text-center text-gray-600 italic">Aucune commande enregistrée.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -123,28 +166,31 @@
     </div>
 </div>
 
+{# Modal détails #}
 <div id="detailsModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[100] p-4">
-    <div class="bg-gray-900 border border-white/10 rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden scale-95" id="modalBox">
+    <div class="bg-gray-900 border border-white/10 rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden">
         <div class="px-8 py-6 border-b border-white/5 flex justify-between items-center">
-            <h2 class="text-xl font-black text-white italic">REÇU <span class="text-yellow-400">#</span><span id="d_id" class="text-yellow-400"></span></h2>
+            <h2 class="text-xl font-black text-white italic">RECAPITULATIF <span class="text-yellow-400">#</span><span id="d_id" class="text-yellow-400"></span></h2>
             <button onclick="closeDetailsModal()" class="text-gray-500 hover:text-white text-2xl">&times;</button>
         </div>
         <div class="p-8 space-y-6">
             <div id="d_plats"></div>
-            <button onclick="closeDetailsModal()" class="w-full bg-white text-black py-4 rounded-2xl font-black uppercase hover:bg-yellow-500">Fermer la vue</button>
+            <button onclick="closeDetailsModal()" class="w-full bg-white text-black py-4 rounded-2xl font-black uppercase hover:bg-yellow-500 transition-all">
+                Fermer
+            </button>
         </div>
     </div>
 </div>
 
 <script>
-    function openDetailsModal(id, table, total, statut, date, plats) {
-        document.getElementById('d_id').innerText = id;
-        document.getElementById('d_plats').innerHTML = plats;
-        document.getElementById('detailsModal').classList.remove('hidden');
-    }
-    function closeDetailsModal() {
-        document.getElementById('detailsModal').classList.add('hidden');
-    }
+function openDetailsModal(id, table, total, statut, date, plats) {
+    document.getElementById('d_id').innerText = id;
+    document.getElementById('d_plats').innerHTML = plats;
+    document.getElementById('detailsModal').classList.remove('hidden');
+}
+function closeDetailsModal() {
+    document.getElementById('detailsModal').classList.add('hidden');
+}
 </script>
 {% endblock %}
 
