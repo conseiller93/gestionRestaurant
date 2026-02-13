@@ -14,7 +14,7 @@
     <p class="text-gray-400 admin-subtitle">Gestion des utilisateurs, tables et tablettes du restaurant.</p>
   </div>
 
- {% if messages %}
+  {% if messages %}
   {% for message in messages %}
     <div class="flash-message mb-4 px-4 py-3 rounded-lg text-sm font-medium
       {% if message.tags == 'success' %} bg-green-800 text-green-200 border border-green-600
@@ -23,7 +23,8 @@
       {{ message }}
     </div>
   {% endfor %}
-{% endif %}
+  {% endif %}
+
   <div class="mb-8 flex justify-end">
     <div class="relative" x-data="{ open: false }">
       <button @click="open = !open"
@@ -43,12 +44,13 @@
         </button>
         <button @click="openModal('modalAjouterTable'); open = false"
                 class="w-full text-left px-5 py-3 hover:bg-gray-700 text-gray-200 rounded-b-lg transition flex items-center gap-3 border-t border-gray-700 btn-dropdown-text">
-          <span class="text-xl">🪑</span> <span class="font-medium">Créer table + tablette</span>
+          <span class="text-xl">🪑</span> <span class="font-medium">Créer / Associer table + tablette</span>
         </button>
       </div>
     </div>
   </div>
 
+  {# ════════════════════════════════ UTILISATEURS ════════════════════════════════ #}
   <section class="mb-12">
     <h2 class="text-2xl text-gray-100 font-bold mb-6 flex items-center gap-3 section-title">
       <span class="text-3xl">👤</span> Utilisateurs
@@ -106,53 +108,146 @@
     </div>
   </section>
 
-  <section>
-  <h2 class="text-2xl text-gray-100 font-bold mb-6 flex items-center gap-3 section-title">
-    <span class="text-3xl">🪑</span> Tables & Tablettes
-  </h2>
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-    {% for t in tables %}
-    <div class="bg-gray-800 p-5 rounded-xl border border-gray-700 card-admin">
-      <div class="flex items-center justify-between mb-4">
-        <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-full bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center text-2xl">🪑</div>
-          <div>
-            <p class="text-gray-100 font-bold text-lg user-id-text">Table {{ t.numero }}</p>
-            <p class="text-gray-400 text-sm">{{ t.nombre_places }} places</p>
+  {# ════════════════════════════════ TABLES & TABLETTES ════════════════════════════════ #}
+  <section class="mb-12">
+    <h2 class="text-2xl text-gray-100 font-bold mb-6 flex items-center gap-3 section-title">
+      <span class="text-3xl">🪑</span> Tables & Tablettes
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {% for t in tables %}
+      <div class="bg-gray-800 p-5 rounded-xl border border-gray-700 card-admin">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center text-2xl">🪑</div>
+            <div>
+              <p class="text-gray-100 font-bold text-lg user-id-text">Table {{ t.numero }}</p>
+              <p class="text-gray-400 text-sm">{{ t.nombre_places }} places</p>
+            </div>
           </div>
+          {% if t.tablette %}
+            {% if t.tablette.is_blocked %}
+              <span class="text-xs bg-red-800 text-red-200 px-2 py-1 rounded-full font-bold">🔒 Bloquée</span>
+            {% else %}
+              <span class="text-xs bg-green-800 text-green-200 px-2 py-1 rounded-full font-bold">✅ Active</span>
+            {% endif %}
+          {% else %}
+            <span class="text-xs bg-gray-700 text-gray-400 px-2 py-1 rounded-full font-bold">— Pas de tablette</span>
+          {% endif %}
         </div>
-      </div>
 
-              <div class="flex flex-col gap-2">
-                <div class="mt-2 text-center">
-            <code class="text-[10px] text-gray-500 break-all bg-black/20 p-1 rounded">
-                /login/?u={{ t.user_tablette.identifiant }}&p=12345cd
+        <div class="flex flex-col gap-2">
+
+          {% if t.user_tablette %}
+          {# ── LIEN QR CORRIGÉ : seulement identifiant, pas de mot de passe ── #}
+          <div class="mt-2 text-center bg-gray-900/50 rounded-lg p-2">
+            <p class="text-[9px] text-gray-500 uppercase font-bold mb-1">URL de connexion rapide</p>
+            <code class="text-[10px] text-blue-400 break-all bg-black/30 p-1 rounded block">
+              /login/?u={{ t.user_tablette.identifiant }}
             </code>
-        </div>
+            <p class="text-[9px] text-gray-600 mt-1">Le client entre son mot de passe sur place</p>
+          </div>
 
-        <form method="POST" action="{% url 'controle_general' %}" target="_blank" class="mt-2">
+          {# ── GÉNÉRER QR CODE — action correcte + target blank ── #}
+          <form method="POST" action="{% url 'controle_general' %}" target="_blank" class="mt-1">
             {% csrf_token %}
             <input type="hidden" name="table_id" value="{{ t.id }}">
-            <button type="submit" name="generer_qr" class="w-full bg-blue-600 ...">
-                📸 Voir QR Code
+            <button type="submit" name="generer_qr"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-bold transition">
+              📸 Voir QR Code
             </button>
-        </form>
-        <form method="POST" id="form-del-table-{{ t.id }}">
-          {% csrf_token %}
-          <input type="hidden" name="table_id" value="{{ t.id }}">
-          <input type="hidden" name="supprimer_table">
-          <button type="button" onclick="askConfirmDelete('form-del-table-{{ t.id }}')"
-                  class="w-full bg-red-700 hover:bg-red-600 text-white py-2 rounded-lg transition">
-            🗑️ Supprimer
-          </button>
-        </form>
+          </form>
+          {% else %}
+          <div class="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-2 text-center">
+            <p class="text-yellow-500 text-xs font-bold">⚠️ Aucune tablette associée</p>
+            <button onclick="preRemplirAssociation('{{ t.id }}', '{{ t.numero }}', '{{ t.nombre_places }}')"
+                    class="mt-2 text-xs bg-yellow-600 hover:bg-yellow-500 text-white px-3 py-1.5 rounded-lg transition font-bold">
+              🔗 Associer une tablette
+            </button>
+          </div>
+          {% endif %}
+
+          {# ── BLOQUER / DÉBLOQUER ── #}
+          {% if t.tablette %}
+          <form method="POST" action="{% url 'toggle_blocage_tablette' t.tablette.id %}">
+            {% csrf_token %}
+            <button type="submit"
+                    class="w-full {% if t.tablette.is_blocked %}bg-orange-600 hover:bg-orange-500{% else %}bg-yellow-700 hover:bg-yellow-600{% endif %} text-white py-2 rounded-lg text-sm font-bold transition">
+              {% if t.tablette.is_blocked %}🔓 Débloquer{% else %}🔒 Bloquer{% endif %}
+            </button>
+          </form>
+          {% endif %}
+
+          {# ── SUPPRIMER TABLE ── #}
+          <form method="POST" id="form-del-table-{{ t.id }}">
+            {% csrf_token %}
+            <input type="hidden" name="table_id" value="{{ t.id }}">
+            <input type="hidden" name="supprimer_table">
+            <button type="button" onclick="askConfirmDelete('form-del-table-{{ t.id }}')"
+                    class="w-full bg-red-700 hover:bg-red-600 text-white py-2 rounded-lg transition text-sm font-bold">
+              🗑️ Supprimer
+            </button>
+          </form>
+        </div>
       </div>
+      {% endfor %}
     </div>
-    {% endfor %}
-  </div>
-</section>
+  </section>
+
+  {# ════════════════════════════════ ORPHELINS ════════════════════════════════ #}
+  {% if tables_sans_tablette or users_tablette_sans_table %}
+  <section class="mb-12">
+    <h2 class="text-xl text-orange-400 font-bold mb-4 flex items-center gap-2">
+      <span>⚠️</span> Éléments non associés
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      {% if tables_sans_tablette %}
+      <div class="bg-orange-900/10 border border-orange-500/30 rounded-xl p-5">
+        <h3 class="text-orange-400 font-bold mb-3 text-sm uppercase tracking-widest">
+          Tables sans tablette ({{ tables_sans_tablette|length }})
+        </h3>
+        <div class="space-y-2">
+          {% for tbl in tables_sans_tablette %}
+          <div class="flex items-center justify-between bg-black/20 rounded-lg px-4 py-2">
+            <span class="text-gray-300 font-bold">Table {{ tbl.numero_table }}</span>
+            <button onclick="preRemplirAssociation('{{ tbl.id }}', '{{ tbl.numero_table }}', '{{ tbl.nombre_places }}')"
+                    class="text-xs bg-orange-600 hover:bg-orange-500 text-white px-3 py-1 rounded-lg transition font-bold">
+              🔗 Associer
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if users_tablette_sans_table %}
+      <div class="bg-blue-900/10 border border-blue-500/30 rounded-xl p-5">
+        <h3 class="text-blue-400 font-bold mb-3 text-sm uppercase tracking-widest">
+          Utilisateurs tablette sans table ({{ users_tablette_sans_table|length }})
+        </h3>
+        <div class="space-y-2">
+          {% for usr in users_tablette_sans_table %}
+          <div class="flex items-center justify-between bg-black/20 rounded-lg px-4 py-2">
+            <span class="text-gray-300 font-bold">@{{ usr.identifiant }}</span>
+            <button onclick="preRemplirAssociationUser('{{ usr.identifiant }}')"
+                    class="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded-lg transition font-bold">
+              🔗 Associer
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </section>
+  {% endif %}
+
 </div>
 
+{# ════════════════════════════════ MODALS ════════════════════════════════ #}
+
+{# Modal Ajouter Utilisateur #}
 <div id="modalAjouterUser" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4">
   <div class="bg-gray-800 border border-gray-700 p-7 rounded-2xl w-full max-w-lg relative modal-content-admin">
     <button onclick="closeModal('modalAjouterUser')" class="absolute top-5 right-5 text-gray-400 hover:text-white text-3xl">&times;</button>
@@ -167,7 +262,11 @@
       <div class="mb-4">
         <label class="block text-gray-300 text-sm label-admin mb-2">Rôle</label>
         <select name="role" id="roleSelect" onchange="toggleNomEmail()" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin">
-          <option value="serveur">Serveur</option><option value="cuisinier">Cuisinier</option><option value="comptable">Comptable</option><option value="admin">Administrateur</option><option value="tablette">Tablette</option>
+          <option value="serveur">Serveur</option>
+          <option value="cuisinier">Cuisinier</option>
+          <option value="comptable">Comptable</option>
+          <option value="admin">Administrateur</option>
+          <option value="tablette">Tablette</option>
         </select>
       </div>
       <div id="champsNomEmail">
@@ -183,6 +282,7 @@
   </div>
 </div>
 
+{# Modal Modifier Utilisateur #}
 <div id="modalModifierUser" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4">
   <div class="bg-gray-800 border border-gray-700 p-7 rounded-2xl w-full max-w-lg relative modal-content-admin">
     <button onclick="closeModal('modalModifierUser')" class="absolute top-5 right-5 text-gray-400 hover:text-white text-3xl">&times;</button>
@@ -198,15 +298,19 @@
       <div class="mb-4">
         <label class="block text-gray-300 text-sm label-admin mb-2">Rôle</label>
         <select name="role" id="modUser_role" onchange="toggleModNomEmail()" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin">
-          <option value="serveur">Serveur</option><option value="cuisinier">Cuisinier</option><option value="comptable">Comptable</option><option value="admin">Administrateur</option><option value="tablette">Tablette</option>
+          <option value="serveur">Serveur</option>
+          <option value="cuisinier">Cuisinier</option>
+          <option value="comptable">Comptable</option>
+          <option value="admin">Administrateur</option>
+          <option value="tablette">Tablette</option>
         </select>
       </div>
       <div id="modChampsNomEmail">
         <div class="grid grid-cols-2 gap-4 mb-4">
-          <input name="first_name" id="modUser_first_name" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin">
-          <input name="last_name" id="modUser_last_name" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin">
+          <input name="first_name" id="modUser_first_name" placeholder="Prénom" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin">
+          <input name="last_name" id="modUser_last_name" placeholder="Nom" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin">
         </div>
-        <input type="email" name="email" id="modUser_email" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin mb-4">
+        <input type="email" name="email" id="modUser_email" placeholder="Email" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin mb-4">
       </div>
       <input type="password" name="password" placeholder="Laisser vide pour ne pas changer" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin mb-6">
       <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 py-3 rounded-lg font-bold text-gray-900">Sauvegarder</button>
@@ -214,25 +318,33 @@
   </div>
 </div>
 
+{# Modal Créer / Associer Table + Tablette — CORRIGÉ #}
 <div id="modalAjouterTable" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4">
   <div class="bg-gray-800 border border-gray-700 p-7 rounded-2xl w-full max-w-lg relative modal-content-admin">
     <button onclick="closeModal('modalAjouterTable')" class="absolute top-5 right-5 text-gray-400 hover:text-white text-3xl">&times;</button>
-    <h2 class="text-gray-100 font-bold text-xl mb-6 modal-title">🪑 Nouvelle Table + Tablette</h2>
+    <h2 class="text-gray-100 font-bold text-xl mb-2 modal-title">🪑 Créer / Associer Table + Tablette</h2>
+    <p class="text-gray-500 text-xs mb-6">Si la table ou la tablette existe déjà, elle sera récupérée et mise à jour. Le mot de passe est optionnel si l'utilisateur existe déjà.</p>
     <form method="POST">
       {% csrf_token %}
       <div class="bg-gray-900 rounded-lg p-4 mb-4 sub-card">
-        <input name="numero_table" placeholder="Numéro table" required type="number" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin mb-3">
-        <input name="nombre_places" placeholder="Nombre places" required type="number" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin">
+        <p class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-3">🪑 Table</p>
+        <input name="numero_table" placeholder="Numéro de table" required type="number" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin mb-3" id="inputNumeroTable">
+        <input name="nombre_places" placeholder="Nombre de places" required type="number" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin" id="inputNombrePlaces">
       </div>
       <div class="bg-gray-900 rounded-lg p-4 mb-6 sub-card">
-        <input name="identifiant_tablette" placeholder="ID Tablette" required class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin mb-3">
-        <input type="password" name="password_tablette" placeholder="MDP Tablette" required class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin">
+        <p class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-3">📱 Tablette</p>
+        <input name="identifiant_tablette" placeholder="Identifiant tablette (ex: TABLE_01)" required class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin mb-3" id="inputIdentTabl">
+        <input type="password" name="password_tablette" placeholder="Mot de passe (requis si nouvel utilisateur)" class="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg input-admin" id="inputPassTabl">
+        <p class="text-gray-600 text-[10px] mt-2">Laisser vide si l'utilisateur existe déjà et que vous ne souhaitez pas changer son mot de passe.</p>
       </div>
-      <button type="submit" name="creer_tablette" class="w-full bg-green-600 hover:bg-green-700 py-3 rounded-lg font-bold text-white">Créer Tout</button>
+      <button type="submit" name="creer_tablette" class="w-full bg-green-600 hover:bg-green-700 py-3 rounded-lg font-bold text-white">
+        ✅ Associer / Créer
+      </button>
     </form>
   </div>
 </div>
 
+{# Modal Confirmation Suppression #}
 <div id="modalConfirmSuppr" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[100] px-4">
   <div class="bg-gray-800 border border-gray-700 p-8 rounded-2xl w-full max-w-sm relative shadow-2xl modal-content-admin text-center">
     <div class="text-red-500 text-6xl mb-4">⚠️</div>
@@ -246,20 +358,32 @@
 </div>
 
 <style>
-  /* --- ADAPTATION MODE CLAIR --- */
+  /* MODE CLAIR */
   body.light-mode .admin-title { color: #b45309 !important; }
   body.light-mode .admin-subtitle { color: #4b5563 !important; }
   body.light-mode .section-title { color: #1f2937 !important; }
-  body.light-mode .card-admin, body.light-mode .dropdown-admin, body.light-mode .modal-content-admin {
-    background-color: #ffffff !important; border-color: #e5e7eb !important; color: #1f2937 !important;
+  body.light-mode .card-admin,
+  body.light-mode .dropdown-admin,
+  body.light-mode .modal-content-admin {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #1f2937 !important;
   }
-  body.light-mode .user-id-text, body.light-mode .modal-title, body.light-mode .info-text { color: #111827 !important; }
+  body.light-mode .user-id-text,
+  body.light-mode .modal-title,
+  body.light-mode .info-text { color: #111827 !important; }
   body.light-mode .sub-card { background-color: #f3f4f6 !important; }
   body.light-mode .btn-dropdown-text { color: #374151 !important; }
   body.light-mode .btn-dropdown-text:hover { background-color: #f3f4f6 !important; }
   body.light-mode .btn-edit { background-color: #e5e7eb !important; color: #1f2937 !important; }
-  body.light-mode .input-admin { background-color: #ffffff !important; border-color: #d1d5db !important; color: #111827 !important; }
+  body.light-mode .input-admin {
+    background-color: #ffffff !important;
+    border-color: #d1d5db !important;
+    color: #111827 !important;
+  }
   body.light-mode .label-admin { color: #374151 !important; }
+  body.light-mode .text-gray-400 { color: #6b7280 !important; }
+  body.light-mode .text-gray-500 { color: #9ca3af !important; }
 </style>
 
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -269,7 +393,6 @@ let formToSubmit = null;
 function openModal(id) { document.getElementById(id).classList.remove("hidden"); }
 function closeModal(id) { document.getElementById(id).classList.add("hidden"); }
 
-// Gestion des champs Nom/Email
 function toggleNomEmail() {
   const role = document.getElementById("roleSelect").value;
   document.getElementById("champsNomEmail").style.display = (role === "tablette") ? "none" : "block";
@@ -279,7 +402,6 @@ function toggleModNomEmail() {
   document.getElementById("modChampsNomEmail").style.display = (role === "tablette") ? "none" : "block";
 }
 
-// Pré-remplissage modification
 function openModifierUser(id, ident, fn, ln, em, role) {
   document.getElementById("modUser_id").value = id;
   document.getElementById("modUser_identifiant").value = ident;
@@ -291,7 +413,23 @@ function openModifierUser(id, ident, fn, ln, em, role) {
   openModal("modalModifierUser");
 }
 
-// Logique de confirmation de suppression
+// Pré-remplir le modal d'association depuis les boutons "Associer"
+function preRemplirAssociation(tableId, numero, places) {
+  document.getElementById("inputNumeroTable").value = numero;
+  document.getElementById("inputNombrePlaces").value = places;
+  document.getElementById("inputIdentTabl").value = "";
+  document.getElementById("inputPassTabl").value = "";
+  openModal("modalAjouterTable");
+}
+
+function preRemplirAssociationUser(identifiant) {
+  document.getElementById("inputNumeroTable").value = "";
+  document.getElementById("inputNombrePlaces").value = "";
+  document.getElementById("inputIdentTabl").value = identifiant;
+  document.getElementById("inputPassTabl").value = "";
+  openModal("modalAjouterTable");
+}
+
 function askConfirmDelete(formId) {
   formToSubmit = document.getElementById(formId);
   openModal('modalConfirmSuppr');
@@ -301,7 +439,6 @@ document.getElementById('btnConfirmDelete').addEventListener('click', function()
   if (formToSubmit) formToSubmit.submit();
 });
 
-// Fermeture au clic extérieur
 document.addEventListener('click', function(e) {
   ['modalAjouterUser', 'modalModifierUser', 'modalAjouterTable', 'modalConfirmSuppr'].forEach(id => {
     let m = document.getElementById(id);
@@ -310,14 +447,13 @@ document.addEventListener('click', function(e) {
 });
 
 document.addEventListener("DOMContentLoaded", function() { toggleNomEmail(); });
-</script>
-<script>
-  setTimeout(() => {
-    document.querySelectorAll('.flash-message').forEach(msg => {
-      msg.style.transition = 'opacity 0.5s ease';
-      msg.style.opacity = '0';
-      setTimeout(() => msg.remove(), 500);
-    });
-  }, 10000); // 3 secondes
+
+setTimeout(() => {
+  document.querySelectorAll('.flash-message').forEach(msg => {
+    msg.style.transition = 'opacity 0.5s ease';
+    msg.style.opacity = '0';
+    setTimeout(() => msg.remove(), 500);
+  });
+}, 10000);
 </script>
 {% endblock %}

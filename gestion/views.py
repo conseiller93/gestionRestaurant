@@ -26,7 +26,6 @@ from .forms import PlatForm
 # DÉCORATEUR : rôle requis
 # =========================================================
 def role_required(*roles):
-    """Autorise l'accès aux superusers et aux utilisateurs dont le rôle est dans `roles`."""
     def decorator(view_func):
         def wrapper(request, *args, **kwargs):
             if not request.user.is_authenticated:
@@ -45,7 +44,6 @@ def login_view(request):
     initial_identifiant = ''
     initial_password = ''
 
-    # Paramètres du QR Code → pré-remplissage
     u = request.GET.get('u', '')
     p = request.GET.get('p', '')
     if u and p:
@@ -57,12 +55,11 @@ def login_view(request):
         password = request.POST.get('password', '').strip()
         user = authenticate(request, identifiant=identifiant, password=password)
         if user is not None:
-            # Vérification blocage tablette
             if user.role == 'tablette':
                 tablette = Tablette.objects.filter(user=user).first()
                 if tablette and tablette.is_blocked:
                     return render(request, 'login.html', {
-                        'error': 'Cette tablette est temporairement bloquée par l\'administrateur.'
+                        'error': "Cette tablette est temporairement bloquée par l'administrateur."
                     })
             login(request, user)
             return redirect('Accueil')
@@ -84,16 +81,14 @@ def logout_view(request):
 
 
 # =========================================================
-# ACCUEIL  (une seule définition — CORRIGÉ : était défini 2x)
+# ACCUEIL
 # =========================================================
 @login_required(login_url='login')
 def Accueil(request):
     from django.utils import timezone
     today = timezone.now().date()
-
     context = {}
 
-    # Statistiques visibles uniquement pour admin et comptable
     if request.user.role in ('admin', 'comptable') or request.user.is_superuser:
         nb_commandes = Commande.objects.filter(date__date=today).count()
         recette_total = (
@@ -127,7 +122,6 @@ def Accueil(request):
 @login_required(login_url='login')
 @role_required('tablette', 'admin')
 def tablette_index(request):
-    # Vérification blocage
     if request.user.role == 'tablette':
         tablette_check = Tablette.objects.filter(user=request.user).first()
         if tablette_check and tablette_check.is_blocked:
@@ -301,7 +295,6 @@ def valider_panier(request):
             quantite=item.quantite,
             prix_unitaire=item.plat.prix_unitaire
         )
-        # Décrémenter le stock
         plat = item.plat
         plat.quantite_disponible = max(0, plat.quantite_disponible - item.quantite)
         if plat.quantite_disponible == 0:
@@ -329,7 +322,6 @@ def cuisinier_index(request):
 
     suggestion_chef = plats_populaires.first() if plats_populaires else None
 
-    # CORRIGÉ : on passe le panier_items pour que le badge fonctionne
     panier_items = PanierItem.objects.none()
     if request.user.role == 'tablette':
         tablette = Tablette.objects.filter(user=request.user, active=True).first()
@@ -402,7 +394,7 @@ def table_index(request):
 
 
 # =========================================================
-# SERVEUR — SEUL rôle autorisé à marquer servie/payée
+# SERVEUR
 # =========================================================
 @login_required(login_url='login')
 @role_required('serveur')
@@ -438,60 +430,47 @@ def serveur_index(request):
 
 
 @login_required(login_url='login')
-@role_required('serveur')  # SEUL le serveur peut marquer comme servie
+@role_required('serveur')
 def serveur_valider_commande(request, commande_id):
-    """Marque une commande comme 'servie' — POST uniquement."""
     if request.method != 'POST':
         messages.error(request, "Méthode non autorisée.")
         return redirect('serveur_index')
 
     commande = get_object_or_404(Commande, id=commande_id, statut='en_attente')
     commande.statut = 'servie'
-    commande.serveur = request.user   # On enregistre quel serveur a servi
+    commande.serveur = request.user
     commande.save()
     messages.success(request, f"✅ Commande #{commande.id} marquée comme servie.")
     return redirect('serveur_index')
 
 
 @login_required(login_url='login')
-@role_required('serveur')  # SEUL le serveur peut encaisser
+@role_required('serveur')
 def serveur_valider_paiement(request, commande_id):
-    """
-    Le serveur valide le paiement :
-    - Crée le Paiement
-    - Passe la commande en 'payee'
-    - Ajoute automatiquement le montant au solde de la caisse
-    - Met à jour is_occupied de la table
-    """
     if request.method != 'POST':
         messages.error(request, "Méthode non autorisée.")
         return redirect('serveur_index')
 
     commande = get_object_or_404(Commande, id=commande_id, statut='servie')
 
-    # Éviter double paiement
     if hasattr(commande, 'paiement'):
         messages.error(request, "Cette commande est déjà payée.")
         return redirect('serveur_index')
 
-    # 1. Créer le paiement
     Paiement.objects.create(
         commande=commande,
         montant=commande.total,
         mode='cash'
     )
 
-    # 2. Mettre à jour la commande
     commande.statut = 'payee'
-    commande.serveur = request.user   # serveur qui a encaissé
+    commande.serveur = request.user
     commande.save()
 
-    # 3. AUTOMATIQUEMENT ajouter à la caisse
     caisse, _ = Caisse.objects.get_or_create(id=1)
     caisse.solde_actuel += commande.total
     caisse.save()
 
-    # 4. Libérer la table si plus de commandes en attente
     table = commande.tablette.table
     commandes_actives = Commande.objects.filter(
         tablette__table=table
@@ -527,7 +506,7 @@ def Commande_index(request):
 
 
 # =========================================================
-# COMPTABLE — lecture seule : mises à jour + historique
+# COMPTABLE
 # =========================================================
 @login_required(login_url='login')
 @role_required('comptable')
@@ -536,7 +515,6 @@ def comptable_index(request):
     from django.utils import timezone
     today = timezone.now().date()
 
-    # Commandes actives (en_attente + servies) — LECTURE SEULE, pas d'action possible
     commandes_actives = (
         Commande.objects.filter(statut__in=['en_attente', 'servie'])
         .select_related('tablette__table', 'serveur')
@@ -544,7 +522,6 @@ def comptable_index(request):
         .order_by('-date')
     )
 
-    # Historique enrichi de tous les paiements
     paiements = (
         Paiement.objects
         .select_related(
@@ -556,7 +533,6 @@ def comptable_index(request):
         .order_by('-date')
     )
 
-    # Statistiques du jour
     paiements_today = paiements.filter(date__date=today)
     recette_du_jour = paiements_today.aggregate(Sum('montant'))['montant__sum'] or 0
     nb_paiements_today = paiements_today.count()
@@ -565,7 +541,6 @@ def comptable_index(request):
     total_depenses = depenses.aggregate(Sum('montant'))['montant__sum'] or 0
 
     if request.method == "POST":
-        # Le comptable peut uniquement ajouter des dépenses
         if 'ajouter_depense' in request.POST:
             description = request.POST.get('description', '').strip()
             montant_str = request.POST.get('montant', '').strip()
@@ -603,11 +578,10 @@ def comptable_index(request):
 
 
 # =========================================================
-# SUPPRIMER COMMANDE / DÉPENSE
+# SUPPRESSIONS
 # =========================================================
 @login_required
 def supprimer_commande_compta(request, commande_id):
-    """Suppression réservée à l'admin uniquement."""
     if request.user.role != 'admin' and not request.user.is_superuser:
         messages.error(request, "Action réservée à l'administrateur.")
         return redirect('comptable_index')
@@ -619,9 +593,8 @@ def supprimer_commande_compta(request, commande_id):
 
 @login_required
 def supprimer_depense(request, depense_id):
-    """Suppression reservee a l admin — reintegre le montant au solde."""
     if request.user.role != 'admin' and not request.user.is_superuser:
-        messages.error(request, "Action reservee a l administrateur.")
+        messages.error(request, "Action réservée à l'administrateur.")
         return redirect('comptable_index')
     depense = get_object_or_404(Depense, id=depense_id)
     montant = depense.montant
@@ -629,31 +602,28 @@ def supprimer_depense(request, depense_id):
     caisse.solde_actuel += montant
     caisse.save()
     depense.delete()
-    messages.success(request, f"Depense supprimee. {montant} FG reintegres au solde.")
+    messages.success(request, f"Dépense supprimée. {montant} FG réintégrés au solde.")
     return redirect('comptable_index')
 
 
 # =========================================================
-# ACTIONS ADMIN — SUPPRESSIONS GLOBALES & REINITIALISATION
+# ACTIONS ADMIN
 # =========================================================
-
 @login_required
 def admin_supprimer_commande(request, commande_id):
-    """Supprimer une commande individuelle — admin uniquement."""
     if request.user.role != 'admin' and not request.user.is_superuser:
-        messages.error(request, "Action reservee a l administrateur.")
+        messages.error(request, "Action réservée à l'administrateur.")
         return redirect(request.META.get('HTTP_REFERER', 'Accueil'))
     commande = get_object_or_404(Commande, id=commande_id)
     commande.delete()
-    messages.success(request, f"Commande #{commande_id} supprimee.")
+    messages.success(request, f"Commande #{commande_id} supprimée.")
     return redirect(request.META.get('HTTP_REFERER', 'commande_index'))
 
 
 @login_required
 def admin_supprimer_paiement(request, paiement_id):
-    """Supprimer un paiement et retirer son montant de la caisse — admin uniquement."""
     if request.user.role != 'admin' and not request.user.is_superuser:
-        messages.error(request, "Action reservee a l administrateur.")
+        messages.error(request, "Action réservée à l'administrateur.")
         return redirect(request.META.get('HTTP_REFERER', 'Accueil'))
     paiement = get_object_or_404(Paiement, id=paiement_id)
     montant = paiement.montant
@@ -661,40 +631,31 @@ def admin_supprimer_paiement(request, paiement_id):
     caisse.solde_actuel = max(0, caisse.solde_actuel - montant)
     caisse.save()
     paiement.delete()
-    messages.success(request, f"Paiement supprime. {montant} FG retires de la caisse.")
+    messages.success(request, f"Paiement supprimé. {montant} FG retirés de la caisse.")
     return redirect('comptable_index')
 
 
 @login_required
 def admin_reinitialiser_solde(request):
-    """Remet le solde de la caisse a zero — admin uniquement."""
     if request.method != 'POST':
         return redirect('comptable_index')
     if request.user.role != 'admin' and not request.user.is_superuser:
-        messages.error(request, "Action reservee a l administrateur.")
+        messages.error(request, "Action réservée à l'administrateur.")
         return redirect('comptable_index')
     caisse, _ = Caisse.objects.get_or_create(id=1)
     ancien_solde = caisse.solde_actuel
     caisse.solde_actuel = Decimal('0.00')
     caisse.save()
-    messages.success(request, f"Caisse reinitialisee. Ancien solde : {ancien_solde} FG.")
+    messages.success(request, f"Caisse réinitialisée. Ancien solde : {ancien_solde} FG.")
     return redirect('comptable_index')
 
 
 @login_required
 def admin_tout_supprimer(request):
-    """
-    Suppression totale selon le type passe en POST :
-    - type=commandes  : toutes les commandes + paiements
-    - type=depenses   : toutes les depenses (solde reintegre)
-    - type=paiements  : tous les paiements (solde retire)
-    - type=plats      : tous les plats
-    Admin uniquement.
-    """
     if request.method != 'POST':
         return redirect('Accueil')
     if request.user.role != 'admin' and not request.user.is_superuser:
-        messages.error(request, "Action reservee a l administrateur.")
+        messages.error(request, "Action réservée à l'administrateur.")
         return redirect('Accueil')
 
     type_suppression = request.POST.get('type', '')
@@ -703,7 +664,7 @@ def admin_tout_supprimer(request):
     if type_suppression == 'commandes':
         nb = Commande.objects.count()
         Commande.objects.all().delete()
-        messages.success(request, f"{nb} commande(s) supprimee(s).")
+        messages.success(request, f"{nb} commande(s) supprimée(s).")
         return redirect('commande_index')
 
     elif type_suppression == 'depenses':
@@ -712,7 +673,7 @@ def admin_tout_supprimer(request):
         Depense.objects.all().delete()
         caisse.solde_actuel += Decimal(str(total))
         caisse.save()
-        messages.success(request, f"{nb} depense(s) supprimee(s). {total} FG reintegres.")
+        messages.success(request, f"{nb} dépense(s) supprimée(s). {total} FG réintégrés.")
         return redirect('comptable_index')
 
     elif type_suppression == 'paiements':
@@ -721,13 +682,13 @@ def admin_tout_supprimer(request):
         Paiement.objects.all().delete()
         caisse.solde_actuel = max(Decimal('0.00'), caisse.solde_actuel - Decimal(str(total)))
         caisse.save()
-        messages.success(request, f"{nb} paiement(s) supprime(s). {total} FG retires de la caisse.")
+        messages.success(request, f"{nb} paiement(s) supprimé(s). {total} FG retirés de la caisse.")
         return redirect('comptable_index')
 
     elif type_suppression == 'plats':
         nb = Plat.objects.count()
         Plat.objects.all().delete()
-        messages.success(request, f"{nb} plat(s) supprime(s).")
+        messages.success(request, f"{nb} plat(s) supprimé(s).")
         return redirect('cuisinier_index')
 
     messages.error(request, "Type de suppression inconnu.")
@@ -735,7 +696,7 @@ def admin_tout_supprimer(request):
 
 
 # =========================================================
-# ADMINISTRATION
+# ADMINISTRATION — CORRIGÉE : association table/tablette
 # =========================================================
 @login_required(login_url="login")
 def admin_page(request):
@@ -804,29 +765,85 @@ def admin_page(request):
                 user_to_del.delete()
                 messages.success(request, "Utilisateur supprimé.")
 
-        # ── CRÉER TABLE + TABLETTE ──
+        # ── CRÉER / ASSOCIER TABLE + TABLETTE ──
+        # CORRIGÉ : logique intelligente — crée ce qui manque, évite les doublons
         elif "creer_tablette" in request.POST:
-            numero = request.POST.get("numero_table")
-            places = request.POST.get("nombre_places")
-            ident_tab = request.POST.get("identifiant_tablette")
-            pass_tab = request.POST.get("password_tablette")
+            numero = request.POST.get("numero_table", "").strip()
+            places = request.POST.get("nombre_places", "").strip()
+            ident_tab = request.POST.get("identifiant_tablette", "").strip()
+            pass_tab = request.POST.get("password_tablette", "").strip()
 
-            if not all([numero, places, ident_tab, pass_tab]):
+            if not all([numero, places, ident_tab]):
                 messages.error(request, "Tous les champs sont requis.")
-            elif TableRestaurant.objects.filter(numero_table=numero).exists():
-                messages.error(request, f"La table n°{numero} existe déjà.")
-            elif CustomUser.objects.filter(identifiant=ident_tab).exists():
-                messages.error(request, "L'identifiant de la tablette est déjà pris.")
             else:
-                user_tab = CustomUser(identifiant=ident_tab, role="tablette", is_active=True)
-                user_tab.set_password(pass_tab)
-                user_tab.save()
-                table = TableRestaurant.objects.create(
-                    numero_table=numero,
-                    nombre_places=int(places)
+                try:
+                    numero_int = int(numero)
+                    places_int = int(places)
+                except ValueError:
+                    messages.error(request, "Numéro de table et nombre de places doivent être des entiers.")
+                    return redirect("controle_general")
+
+                # 1) Récupérer ou créer la table
+                table, table_created = TableRestaurant.objects.get_or_create(
+                    numero_table=numero_int,
+                    defaults={'nombre_places': places_int}
                 )
-                Tablette.objects.create(user=user_tab, table=table)
-                messages.success(request, f"✅ Table {numero} et tablette « {ident_tab} » créées.")
+                if not table_created:
+                    # La table existe déjà — on met à jour le nombre de places si fourni
+                    table.nombre_places = places_int
+                    table.save()
+
+                # 2) Récupérer ou créer l'utilisateur tablette
+                user_tab = CustomUser.objects.filter(identifiant=ident_tab).first()
+                if user_tab is None:
+                    # L'utilisateur n'existe pas → on le crée
+                    if not pass_tab:
+                        messages.error(request, "Un mot de passe est requis pour créer un nouvel utilisateur tablette.")
+                        return redirect("controle_general")
+                    user_tab = CustomUser(identifiant=ident_tab, role="tablette", is_active=True)
+                    user_tab.set_password(pass_tab)
+                    user_tab.save()
+                else:
+                    # L'utilisateur existe déjà — on met à jour le mot de passe si fourni
+                    if pass_tab:
+                        user_tab.set_password(pass_tab)
+                        user_tab.save()
+                    # Vérifier que c'est bien un rôle tablette
+                    if user_tab.role != 'tablette':
+                        messages.error(request, f"L'utilisateur « {ident_tab} » existe déjà avec un rôle différent (rôle : {user_tab.role}).")
+                        return redirect("controle_general")
+
+                # 3) Récupérer ou créer la Tablette (lien table ↔ user)
+                # Cas : la table a déjà une tablette liée → on la remplace
+                tablette_existante_table = Tablette.objects.filter(table=table).first()
+                # Cas : l'user a déjà une tablette liée → on la remplace
+                tablette_existante_user = Tablette.objects.filter(user=user_tab).first()
+
+                if tablette_existante_table and tablette_existante_user:
+                    if tablette_existante_table == tablette_existante_user:
+                        # Déjà associés — rien à faire
+                        messages.success(request, f"✅ Table {numero} déjà associée à « {ident_tab} ».")
+                    else:
+                        # Conflit : deux tablettes différentes → on supprime les deux et on recrée
+                        tablette_existante_table.delete()
+                        tablette_existante_user.delete()
+                        Tablette.objects.create(user=user_tab, table=table)
+                        messages.success(request, f"✅ Table {numero} ré-associée à « {ident_tab} » (anciens liens supprimés).")
+                elif tablette_existante_table:
+                    # La table est déjà liée à un autre user → on met à jour
+                    tablette_existante_table.user = user_tab
+                    tablette_existante_table.save()
+                    messages.success(request, f"✅ Table {numero} ré-associée à « {ident_tab} ».")
+                elif tablette_existante_user:
+                    # L'user est déjà lié à une autre table → on met à jour
+                    tablette_existante_user.table = table
+                    tablette_existante_user.save()
+                    messages.success(request, f"✅ Tablette « {ident_tab} » ré-associée à la Table {numero}.")
+                else:
+                    # Aucune tablette existante → création normale
+                    Tablette.objects.create(user=user_tab, table=table)
+                    msg_table = "créée" if table_created else "existante"
+                    messages.success(request, f"✅ Table {numero} ({msg_table}) et tablette « {ident_tab} » associées.")
 
         # ── SUPPRIMER TABLE ──
         elif "supprimer_table" in request.POST:
@@ -848,10 +865,9 @@ def admin_page(request):
             tab_info = Tablette.objects.filter(table=table).first()
 
             if tab_info and tab_info.user:
+                # CORRIGÉ : on n'inclut PAS le mot de passe dans l'URL
+                # Le QR code préremplit seulement l'identifiant — plus sécurisé
                 base_url = request.build_absolute_uri(reverse('login'))
-                # On utilise le vrai mot de passe haché ? Non — on encode l'identifiant
-                # L'admin devra saisir le mot de passe une fois sur la tablette physique
-                # Pour le QR, on pré-remplit seulement l'identifiant (plus sécurisé)
                 url = f"{base_url}?u={tab_info.user.identifiant}"
 
                 qr = qrcode.QRCode(
@@ -871,7 +887,7 @@ def admin_page(request):
 
         return redirect("controle_general")
 
-    # GET
+    # GET — préparation du contexte
     utilisateurs = CustomUser.objects.all().order_by("role", "identifiant")
     tables_data = []
     for t in TableRestaurant.objects.all().order_by("numero_table"):
@@ -885,9 +901,17 @@ def admin_page(request):
             "active": tab_info.active if tab_info else False,
         })
 
+    # NOUVEAU : tables sans tablette et tablettes sans table pour l'admin
+    tables_sans_tablette = TableRestaurant.objects.filter(tablette__isnull=True).order_by("numero_table")
+    users_tablette_sans_table = CustomUser.objects.filter(
+        role='tablette', tablette__isnull=True
+    ).order_by("identifiant")
+
     return render(request, "admin/admin.html", {
         "utilisateurs": utilisateurs,
         "tables": tables_data,
+        "tables_sans_tablette": tables_sans_tablette,
+        "users_tablette_sans_table": users_tablette_sans_table,
     })
 
 
@@ -943,20 +967,19 @@ def modifier_mot_de_passe(request):
 
 
 # =========================================================
-# EXPORT FACTURE (TICKET REÇU)  — CORRIGÉ
+# EXPORT FACTURE
 # =========================================================
 @login_required
 def export_commande_data(request, commande_id=None):
     user = request.user
 
-    # Export global CSV pour admin
     if commande_id is None:
         if user.role != 'admin' and not user.is_superuser:
             return HttpResponseForbidden("Accès refusé.")
 
         response = HttpResponse(content_type='text/csv; charset=utf-8')
         response['Content-Disposition'] = 'attachment; filename="ventes_global.csv"'
-        response.write('\ufeff')  # BOM pour Excel
+        response.write('\ufeff')
         writer = csv.writer(response, delimiter=';')
         writer.writerow(['ID', 'Table', 'Serveur', 'Total (FG)', 'Statut', 'Date', 'Plats'])
 
@@ -979,7 +1002,6 @@ def export_commande_data(request, commande_id=None):
             ])
         return response
 
-    # Export ticket individuel
     try:
         if getattr(user, 'role', None) == 'tablette':
             tablette = Tablette.objects.get(user=user)
@@ -989,7 +1011,6 @@ def export_commande_data(request, commande_id=None):
     except (Tablette.DoesNotExist, Commande.DoesNotExist):
         return HttpResponseForbidden("Commande introuvable.")
 
-    # CORRIGÉ : on autorise l'export pour commandes en_attente ET payées
     response = HttpResponse(content_type='text/plain; charset=utf-8')
     response['Content-Disposition'] = f'attachment; filename="Recu_{commande.id}.txt"'
 

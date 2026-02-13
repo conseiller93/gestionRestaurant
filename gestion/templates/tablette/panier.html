@@ -7,9 +7,8 @@
 {% block content %}
 <div class="max-w-4xl mx-auto px-4 py-6">
 
-    {# --- TITRE DYNAMIQUE --- #}
     <div class="mb-8">
-        <h1 class="text-3xl font-black text-white italic">
+        <h1 class="text-3xl font-black italic panier-title">
             {% if request.user.role == 'admin' %}
                 📊 RÉCAPITULATIF <span class="text-blue-400">LECTURE SEULE</span>
             {% else %}
@@ -22,9 +21,9 @@
     </div>
 
     {% if items %}
-    <div class="bg-gray-800 rounded-3xl shadow-2xl overflow-hidden border border-gray-700">
+    <div class="panier-table-box rounded-3xl shadow-2xl overflow-hidden border">
         <table class="w-full text-left">
-            <thead class="bg-gray-900/80">
+            <thead class="panier-thead">
                 <tr>
                     <th class="px-6 py-4 text-gray-400 text-xs font-black uppercase tracking-widest">Plat</th>
                     <th class="px-6 py-4 text-center text-gray-400 text-xs font-black uppercase tracking-widest">Quantité</th>
@@ -34,26 +33,24 @@
                     {% endif %}
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-700">
+            <tbody class="panier-tbody">
                 {% for item in items %}
-                <tr class="hover:bg-white/5 transition-colors">
+                <tr class="panier-row hover:bg-white/5 transition-colors">
                     <td class="px-6 py-4">
-                        <p class="text-white font-bold">{{ item.plat.nom }}</p>
+                        <p class="font-bold panier-item-nom">{{ item.plat.nom }}</p>
                         <p class="text-gray-500 text-[10px]">{{ item.plat.prix_unitaire }} FG / unité</p>
                     </td>
-                    
+
                     <td class="px-6 py-4 text-center">
                         {% if request.user.role == 'admin' %}
-                            {# --- LECTURE SEULE POUR ADMIN --- #}
-                            <span class="bg-gray-700 text-white px-4 py-1 rounded-full font-bold text-sm italic">
+                            <span class="panier-qty-badge px-4 py-1 rounded-full font-bold text-sm italic">
                                 x {{ item.quantite }}
                             </span>
                         {% else %}
-                            {# --- ACTIONS POUR TABLETTE --- #}
                             <form method="POST" action="{% url 'modifier_panier' item.id %}" class="flex items-center justify-center gap-2">
                                 {% csrf_token %}
-                                <input type="number" name="quantite" value="{{ item.quantite }}" min="1" 
-                                       class="w-12 bg-gray-900 border border-gray-600 text-white rounded-lg px-1 py-1 text-center font-bold">
+                                <input type="number" name="quantite" value="{{ item.quantite }}" min="1"
+                                       class="w-12 panier-input border rounded-lg px-1 py-1 text-center font-bold">
                                 <button type="submit" class="text-blue-500 hover:text-blue-400 font-black text-xs">MAJ</button>
                             </form>
                         {% endif %}
@@ -76,18 +73,17 @@
             </tbody>
         </table>
 
-        {# --- PIED DE TABLEAU : TOTAL --- #}
-        <div class="p-8 bg-gray-900/50 border-t border-gray-700 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div class="p-8 panier-footer border-t flex flex-col md:flex-row justify-between items-center gap-6">
             <div class="text-center md:text-left">
                 <p class="text-gray-500 text-xs font-black uppercase">Montant Total</p>
                 <p class="text-4xl text-yellow-500 font-black italic">{{ total }} <span class="text-sm">FG</span></p>
             </div>
 
             <div class="flex gap-4 w-full md:w-auto">
-                <a href="{% url 'cuisinier_index' %}" class="flex-1 md:flex-none text-center bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-xl font-bold transition">
+                <a href="{% url 'cuisinier_index' %}" class="flex-1 md:flex-none text-center panier-btn-back px-6 py-3 rounded-xl font-bold transition">
                     {% if request.user.role == 'admin' %}Retour Menu{% else %}Ajouter d'autres plats{% endif %}
                 </a>
-                
+
                 {% if request.user.role != 'admin' %}
                     <a href="{% url 'valider_panier' %}" class="flex-1 md:flex-none text-center bg-green-600 hover:bg-green-500 text-white px-8 py-3 rounded-xl font-black shadow-lg shadow-green-600/30 transition-all active:scale-95">
                         ENVOYER EN CUISINE
@@ -97,19 +93,70 @@
         </div>
     </div>
     {% else %}
-        {# --- PANIER VIDE --- #}
-        <div class="bg-gray-800/50 border border-dashed border-gray-700 rounded-3xl p-16 text-center">
+        <div class="panier-empty border border-dashed rounded-3xl p-16 text-center">
             <span class="text-6xl block mb-4 opacity-20">🛒</span>
             <p class="text-gray-500 text-xl italic font-medium">Aucun article dans ce panier.</p>
             <a href="{% url 'cuisinier_index' %}" class="mt-8 inline-block bg-blue-600 text-white px-8 py-3 rounded-xl font-bold uppercase tracking-widest text-xs">Ouvrir la carte</a>
         </div>
     {% endif %}
 
-    {# --- BOUTON RETOUR TABLETTE --- #}
     <div class="mt-12 text-center">
         <a href="{% url 'tablette_index' %}" class="text-gray-600 hover:text-white transition-colors text-[10px] font-black uppercase tracking-[0.3em]">
             ← Accueil de la table
         </a>
     </div>
 </div>
+
+<style>
+  /* DARK */
+  .panier-title { color: #ffffff; }
+  .panier-table-box { background-color: #1f2937; border-color: #374151; }
+  .panier-thead { background-color: rgba(17,24,39,0.8); }
+  .panier-tbody { }
+  .panier-row { border-bottom: 1px solid #374151; }
+  .panier-item-nom { color: #ffffff; }
+  .panier-qty-badge { background-color: #374151; color: #ffffff; }
+  .panier-input { background-color: #111827; border-color: #4b5563; color: #ffffff; }
+  .panier-footer { background-color: rgba(17,24,39,0.5); border-color: #374151; }
+  .panier-btn-back { background-color: #374151; color: #ffffff; }
+  .panier-btn-back:hover { background-color: #4b5563; }
+  .panier-empty { background-color: rgba(31,41,55,0.5); border-color: #374151; }
+
+  /* LIGHT */
+  body.light-mode .panier-title { color: #111827 !important; }
+  body.light-mode .panier-table-box {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06) !important;
+  }
+  body.light-mode .panier-thead { background-color: #f9fafb !important; }
+  body.light-mode .panier-row { border-color: #f3f4f6 !important; }
+  body.light-mode .panier-row:hover { background-color: #f9fafb !important; }
+  body.light-mode .panier-item-nom { color: #111827 !important; }
+  body.light-mode .panier-qty-badge {
+    background-color: #f3f4f6 !important;
+    color: #374151 !important;
+  }
+  body.light-mode .panier-input {
+    background-color: #ffffff !important;
+    border-color: #d1d5db !important;
+    color: #111827 !important;
+  }
+  body.light-mode .panier-footer {
+    background-color: #f9fafb !important;
+    border-color: #e5e7eb !important;
+  }
+  body.light-mode .panier-btn-back {
+    background-color: #e5e7eb !important;
+    color: #374151 !important;
+  }
+  body.light-mode .panier-btn-back:hover { background-color: #d1d5db !important; }
+  body.light-mode .panier-empty {
+    background-color: #f9fafb !important;
+    border-color: #d1d5db !important;
+  }
+  body.light-mode .text-gray-400 { color: #6b7280 !important; }
+  body.light-mode .text-gray-500 { color: #9ca3af !important; }
+  body.light-mode .text-gray-600 { color: #6b7280 !important; }
+</style>
 {% endblock %}

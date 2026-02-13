@@ -5,17 +5,15 @@
 {% block content %}
 <div class="max-w-2xl mx-auto px-4 py-8">
 
-  <!-- Bandeau vert : succès -->
   <div class="bg-green-700 text-white rounded-xl p-6 text-center mb-6">
     <h1 class="text-3xl font-bold mb-1">✅ Commande validée</h1>
     <p class="text-green-200">Votre commande a bien été enregistrée.</p>
   </div>
 
-  <!-- Récapitulatif -->
-  <div class="bg-gray-800 rounded-xl shadow p-6">
+  <div class="val-card rounded-xl shadow p-6">
     <h2 class="text-xl font-semibold text-yellow-400 mb-4">Récapitulatif</h2>
 
-    <div class="space-y-2 text-gray-300 mb-4">
+    <div class="space-y-2 val-info mb-4">
       <p><strong>Commande n° :</strong> {{ commande.id }}</p>
       <p><strong>Table :</strong> {{ commande.tablette.table.numero_table }}</p>
       <p><strong>Date :</strong> {{ commande.date|date:"d/m/Y H:i" }}</p>
@@ -26,21 +24,20 @@
       </p>
     </div>
 
-    <!-- Items de la commande -->
-    <h3 class="text-lg font-semibold text-gray-200 mb-3">Plats commandés</h3>
-    <div class="bg-gray-900 rounded-lg overflow-hidden">
+    <h3 class="text-lg font-semibold val-subtitle mb-3">Plats commandés</h3>
+    <div class="val-table-wrap rounded-lg overflow-hidden">
       <table class="w-full text-sm">
         <thead>
-          <tr class="text-gray-400 border-b border-gray-700">
+          <tr class="val-thead border-b val-border">
             <th class="text-left px-4 py-2">Plat</th>
             <th class="text-center px-4 py-2">Qté</th>
             <th class="text-right px-4 py-2">Prix u.</th>
             <th class="text-right px-4 py-2">Montant</th>
           </tr>
         </thead>
-        <tbody class="text-gray-200">
+        <tbody class="val-info">
           {% for item in commande.items.all %}
-          <tr class="border-b border-gray-800">
+          <tr class="border-b val-border">
             <td class="px-4 py-2">{{ item.plat.nom }}</td>
             <td class="px-4 py-2 text-center">{{ item.quantite }}</td>
             <td class="px-4 py-2 text-right">{{ item.prix_unitaire }} FG</td>
@@ -51,13 +48,11 @@
       </table>
     </div>
 
-    <!-- Total -->
     <div class="mt-4 flex justify-end">
       <span class="text-xl text-yellow-400 font-bold">Total : {{ commande.total }} FG</span>
     </div>
   </div>
 
-  <!-- Bouton retour -->
   <div class="mt-6 text-center">
     <a href="{% url 'tablette_index' %}"
        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition">
@@ -66,4 +61,26 @@
   </div>
 
 </div>
+
+<style>
+  /* DARK */
+  .val-card { background-color: #1f2937; }
+  .val-info { color: #d1d5db; }
+  .val-subtitle { color: #e5e7eb; }
+  .val-table-wrap { background-color: #111827; }
+  .val-thead { color: #9ca3af; }
+  .val-border { border-color: #374151; }
+
+  /* LIGHT */
+  body.light-mode .val-card {
+    background-color: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06) !important;
+  }
+  body.light-mode .val-info { color: #374151 !important; }
+  body.light-mode .val-subtitle { color: #111827 !important; }
+  body.light-mode .val-table-wrap { background-color: #f9fafb !important; }
+  body.light-mode .val-thead { color: #6b7280 !important; }
+  body.light-mode .val-border { border-color: #e5e7eb !important; }
+</style>
 {% endblock %}

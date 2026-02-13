@@ -8,17 +8,16 @@
     <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
         <div>
             <span class="text-yellow-500 font-bold uppercase tracking-[0.3em] text-xs italic">Gestion de Salle</span>
-            <h1 class="text-6xl font-black text-white italic tracking-tighter">
+            <h1 class="text-6xl font-black italic tracking-tighter srv-title">
                 ESPACE <span class="text-yellow-400">SERVEUR</span>
             </h1>
         </div>
-        <div class="bg-gray-800/40 backdrop-blur-xl px-8 py-4 rounded-[2rem] border border-white/5 flex items-center gap-4 shadow-2xl">
+        <div class="srv-sync-box px-8 py-4 rounded-[2rem] border border-white/5 flex items-center gap-4 shadow-2xl">
             <div class="w-4 h-4 bg-blue-500 rounded-full animate-pulse shadow-[0_0_15px_rgba(59,130,246,0.5)]"></div>
-            <p class="text-sm font-black text-gray-200 uppercase tracking-widest">Live Sync</p>
+            <p class="text-sm font-black uppercase tracking-widest srv-sync-text">Live Sync</p>
         </div>
     </div>
 
-    {# Flash messages #}
     {% if messages %}
     <div class="mb-8 space-y-3">
         {% for message in messages %}
@@ -33,8 +32,8 @@
 
     {# ── ÉTAT DES TABLES ── #}
     <section class="mb-16">
-        <h2 class="text-2xl font-black text-gray-400 mb-8 flex items-center gap-4">
-            <span class="bg-gray-800 p-3 rounded-2xl">📍</span> Suivi des Tables
+        <h2 class="text-2xl font-black mb-8 flex items-center gap-4 srv-section-title">
+            <span class="srv-icon-bg p-3 rounded-2xl">📍</span> Suivi des Tables
         </h2>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8">
@@ -43,12 +42,12 @@
                 {% if t.etat == 'libre' %}bg-green-950/10 border-green-500/20 hover:border-green-500/60
                 {% elif t.etat == 'en_attente' %}bg-yellow-950/10 border-yellow-500/40 hover:border-yellow-500/80
                 {% elif t.etat == 'servie' %}bg-blue-950/10 border-blue-500/40 hover:border-blue-500/80
-                {% else %}bg-gray-800/40 border-gray-700{% endif %}">
+                {% else %}bg-gray-800/40 border-gray-700{% endif %} srv-table-card">
 
                 <div class="relative z-10">
                     <p class="text-[10px] uppercase font-black tracking-[0.2em] text-gray-500 mb-2">Table</p>
-                    <p class="text-5xl font-black text-white mb-3 tracking-tighter">{{ t.table.numero_table }}</p>
-                    <p class="text-sm text-gray-400 font-bold mb-6 italic">{{ t.table.nombre_places }} couverts</p>
+                    <p class="text-5xl font-black mb-3 tracking-tighter srv-table-num">{{ t.table.numero_table }}</p>
+                    <p class="text-sm font-bold mb-6 italic srv-table-places">{{ t.table.nombre_places }} couverts</p>
 
                     <span class="inline-flex items-center px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg
                         {% if t.etat == 'libre' %}bg-green-500 text-black
@@ -61,7 +60,7 @@
                         {% else %}Libre{% endif %}
                     </span>
                 </div>
-                <div class="absolute -bottom-4 -right-4 text-9xl opacity-5 font-black italic select-none">
+                <div class="absolute -bottom-4 -right-4 text-9xl opacity-5 font-black italic select-none srv-table-num">
                     {{ t.table.numero_table }}
                 </div>
             </div>
@@ -71,16 +70,16 @@
 
     {# ── COMMANDES ACTIVES ── #}
     <section>
-        <h2 class="text-2xl font-black text-gray-400 mb-8 flex items-center gap-4">
-            <span class="bg-gray-800 p-3 rounded-2xl">📋</span> Commandes Actives
+        <h2 class="text-2xl font-black mb-8 flex items-center gap-4 srv-section-title">
+            <span class="srv-icon-bg p-3 rounded-2xl">📋</span> Commandes Actives
         </h2>
 
         {% if commandes %}
-        <div class="bg-gray-900/40 backdrop-blur-md rounded-[3rem] border border-white/5 shadow-2xl overflow-hidden">
+        <div class="srv-table-wrap rounded-[3rem] border border-white/5 shadow-2xl overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-white/5 border-b border-white/5">
+                        <tr class="srv-thead border-b border-white/5">
                             <th class="px-8 py-6 text-xs font-black text-gray-500 uppercase tracking-widest">ID</th>
                             <th class="px-8 py-6 text-xs font-black text-gray-500 uppercase tracking-widest">Table</th>
                             <th class="px-8 py-6 text-xs font-black text-gray-500 uppercase tracking-widest">Plats commandés</th>
@@ -91,7 +90,7 @@
                     </thead>
                     <tbody class="divide-y divide-white/5">
                         {% for cmd in commandes %}
-                        <tr class="group hover:bg-white/[0.02] transition-all">
+                        <tr class="group srv-row transition-all">
 
                             <td class="px-8 py-8 font-mono text-yellow-500 font-bold text-lg">#{{ cmd.id }}</td>
 
@@ -101,7 +100,7 @@
                                         {{ cmd.tablette.table.numero_table }}
                                     </div>
                                     <div>
-                                        <span class="text-xl font-black text-white italic">Table {{ cmd.tablette.table.numero_table }}</span>
+                                        <span class="text-xl font-black italic srv-text">Table {{ cmd.tablette.table.numero_table }}</span>
                                         <p class="text-[10px] text-gray-600">{{ cmd.date|date:"H:i" }}</p>
                                     </div>
                                 </div>
@@ -110,16 +109,16 @@
                             <td class="px-8 py-8">
                                 <div class="flex flex-wrap gap-2">
                                     {% for item in cmd.items.all %}
-                                    <span class="inline-flex items-center bg-gray-800 text-gray-100 text-sm px-3 py-1.5 rounded-xl border border-white/10 shadow-sm">
+                                    <span class="inline-flex items-center srv-badge text-sm px-3 py-1.5 rounded-xl border border-white/10 shadow-sm">
                                         <b class="text-yellow-400 mr-1.5">×{{ item.quantite }}</b>
-                                        <span class="font-bold">{{ item.plat.nom }}</span>
+                                        <span class="font-bold srv-text">{{ item.plat.nom }}</span>
                                     </span>
                                     {% endfor %}
                                 </div>
                             </td>
 
                             <td class="px-8 py-8 text-right">
-                                <span class="text-3xl font-black text-white tracking-tighter">
+                                <span class="text-3xl font-black tracking-tighter srv-total">
                                     {{ cmd.total|floatformat:0 }}
                                     <span class="text-sm text-gray-500 font-light">FG</span>
                                 </span>
@@ -137,10 +136,8 @@
                                 {% endif %}
                             </td>
 
-                            {# ── ACTIONS POST UNIQUEMENT ── #}
                             <td class="px-8 py-8 text-center">
                                 {% if cmd.statut == 'en_attente' %}
-                                {# Bouton : Marquer comme servie (POST) #}
                                 <form method="POST"
                                       action="{% url 'serveur_valider_commande' cmd.id %}"
                                       @submit="loading = true"
@@ -153,7 +150,6 @@
                                 </form>
 
                                 {% elif cmd.statut == 'servie' %}
-                                {# Bouton : Encaisser / Marquer payée (POST) #}
                                 <form method="POST"
                                       action="{% url 'serveur_valider_paiement' cmd.id %}"
                                       @submit="loading = true"
@@ -174,24 +170,75 @@
         </div>
 
         {% else %}
-        <div class="bg-gray-900/20 border-2 border-dashed border-white/5 rounded-[3rem] py-32 text-center">
+        <div class="srv-empty border-2 border-dashed border-white/5 rounded-[3rem] py-32 text-center">
             <div class="text-8xl mb-6 opacity-10">🍽️</div>
             <p class="text-gray-500 text-xl italic font-medium">Aucun service actif pour le moment.</p>
         </div>
         {% endif %}
     </section>
 
-    {# Overlay chargement #}
     <div x-show="loading"
          class="fixed inset-0 bg-black/90 backdrop-blur-md z-[999] flex items-center justify-center"
          style="display: none;">
         <div class="flex flex-col items-center">
             <div class="w-20 h-20 border-8 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
-            <p class="text-white mt-8 font-black uppercase tracking-[0.5em] text-sm animate-pulse">
-                Mise à jour…
-            </p>
+            <p class="text-white mt-8 font-black uppercase tracking-[0.5em] text-sm animate-pulse">Mise à jour…</p>
         </div>
     </div>
 
 </div>
+
+<style>
+  /* DARK */
+  .srv-title { color: #ffffff; }
+  .srv-sync-box { background: rgba(255,255,255,0.05); backdrop-filter: blur(24px); }
+  .srv-sync-text { color: #e5e7eb; }
+  .srv-section-title { color: #9ca3af; }
+  .srv-icon-bg { background-color: #1f2937; }
+  .srv-table-card { }
+  .srv-table-num { color: #ffffff; }
+  .srv-table-places { color: #9ca3af; }
+  .srv-table-wrap { background: rgba(17,24,39,0.4); backdrop-filter: blur(16px); }
+  .srv-thead { background: rgba(255,255,255,0.05); }
+  .srv-row:hover { background: rgba(255,255,255,0.02); }
+  .srv-text { color: #ffffff; }
+  .srv-badge { background-color: #1f2937; color: #d1d5db; }
+  .srv-total { color: #ffffff; }
+  .srv-empty { background: rgba(17,24,39,0.2); }
+
+  /* LIGHT */
+  body.light-mode .srv-title { color: #111827 !important; }
+  body.light-mode .srv-sync-box {
+    background: #ffffff !important;
+    border-color: #e5e7eb !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08) !important;
+  }
+  body.light-mode .srv-sync-text { color: #374151 !important; }
+  body.light-mode .srv-section-title { color: #374151 !important; }
+  body.light-mode .srv-icon-bg { background-color: #e5e7eb !important; }
+  body.light-mode .srv-table-num { color: #111827 !important; }
+  body.light-mode .srv-table-places { color: #6b7280 !important; }
+  body.light-mode .srv-table-wrap {
+    background: #ffffff !important;
+    border-color: #e5e7eb !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06) !important;
+  }
+  body.light-mode .srv-thead { background-color: #f9fafb !important; }
+  body.light-mode .srv-row { border-color: #f3f4f6 !important; }
+  body.light-mode .srv-row:hover { background-color: #f9fafb !important; }
+  body.light-mode .srv-text { color: #111827 !important; }
+  body.light-mode .srv-badge {
+    background-color: #f3f4f6 !important;
+    border-color: #e5e7eb !important;
+    color: #374151 !important;
+  }
+  body.light-mode .srv-total { color: #111827 !important; }
+  body.light-mode .srv-empty {
+    background-color: #f9fafb !important;
+    border-color: #d1d5db !important;
+  }
+  body.light-mode .text-gray-500 { color: #9ca3af !important; }
+  body.light-mode .text-gray-600 { color: #6b7280 !important; }
+  body.light-mode .divide-white\/5 > * { border-color: #f3f4f6 !important; }
+</style>
 {% endblock %}

@@ -1,36 +1,45 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="min-h-screen bg-[#070b14] text-gray-100 p-8 font-sans">
-    
+<div class="text-gray-100 p-8 font-sans">
+
     <header class="mb-12">
-        <h1 class="text-5xl font-black tracking-tight mb-2 italic">GESTION <span class="text-green-500">SALLE</span></h1>
-        <p class="text-gray-500 font-medium tracking-wide">État des terminaux et des tables de l'établissement.</p>
+        <h1 class="text-5xl font-black tracking-tight mb-2 italic table-title">GESTION <span class="text-green-500">SALLE</span></h1>
+        <p class="text-gray-500 font-medium tracking-wide table-subtitle">État des terminaux et des tables de l'établissement.</p>
     </header>
 
     <section class="mb-16">
-        <h2 class="text-xl font-black text-blue-400 mb-8 flex items-center gap-3">
+        <h2 class="text-xl font-black text-blue-400 mb-8 flex items-center gap-3 table-section-title">
             <span class="p-2 bg-blue-500/20 rounded-xl text-sm">📱</span> TABLES CONNECTÉES
         </h2>
-        
+
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {% for table in tables %}
-                {# ICI : Django utilise la relation OneToOne inverse #}
                 {% if table.tablette %}
-                <div class="bg-gray-900/40 border-2 {% if table.is_occupied %}border-red-500/40 shadow-[0_10px_30px_rgba(239,68,68,0.15)]{% else %}border-blue-500/40{% endif %} rounded-[3rem] p-8 transition-all hover:scale-[1.02] duration-300">
+                <div class="table-card border-2 {% if table.is_occupied %}border-red-500/40 shadow-[0_10px_30px_rgba(239,68,68,0.15)]{% else %}border-blue-500/40{% endif %} rounded-[3rem] p-8 transition-all hover:scale-[1.02] duration-300">
                     <div class="flex justify-between items-start mb-6">
-                        <h3 class="text-5xl font-black italic tracking-tighter">T-{{ table.numero_table }}</h3>
+                        <h3 class="text-5xl font-black italic tracking-tighter table-num">T-{{ table.numero_table }}</h3>
                         <div class="bg-blue-500/20 text-blue-400 p-2 rounded-xl">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                            </svg>
                         </div>
                     </div>
 
                     <div class="space-y-4 mb-8">
-                        <div class="bg-black/40 rounded-2xl p-4 border border-white/5">
+                        <div class="table-info-block rounded-2xl p-4 border border-white/5">
                             <p class="text-[9px] text-gray-500 font-black uppercase mb-1">Identifiant Tablette</p>
-                            <p class="text-lg font-black text-white italic">@{{ table.tablette.user.identifiant }}</p>
+                            <p class="text-lg font-black italic table-info-val">@{{ table.tablette.user.identifiant }}</p>
                         </div>
-                        <p class="text-sm font-bold text-gray-400 ml-2">{{ table.nombre_places }} Couverts</p>
+                        <p class="text-sm font-bold text-gray-400 ml-2 table-places">{{ table.nombre_places }} Couverts</p>
+                    </div>
+
+                    {# ── URL DE CONNEXION RAPIDE ── #}
+                    <div class="mb-4 bg-black/20 rounded-2xl p-3 border border-white/5">
+                        <p class="text-[9px] text-gray-600 font-black uppercase mb-1">URL QR Code</p>
+                        <code class="text-[10px] text-blue-400 break-all block">
+                            /login/?u={{ table.tablette.user.identifiant }}
+                        </code>
                     </div>
 
                     <div class="flex items-center gap-3 bg-black/20 rounded-full px-5 py-3 w-fit">
@@ -46,17 +55,17 @@
     </section>
 
     <section>
-        <h2 class="text-xl font-black text-gray-600 mb-8 flex items-center gap-3">
-            <span class="p-2 bg-gray-800 rounded-xl text-sm">🪑</span> TABLES EN ATTENTE D'ASSIGNATION
+        <h2 class="text-xl font-black text-gray-500 mb-8 flex items-center gap-3 table-section-title">
+            <span class="p-2 rounded-xl text-sm table-offline-icon">🪑</span> TABLES EN ATTENTE D'ASSIGNATION
         </h2>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
             {% for table in tables %}
                 {% if not table.tablette %}
-                <div class="bg-gray-900/20 border-2 border-dashed border-white/5 rounded-[2.5rem] p-6 group hover:border-gray-500 transition-all">
-                    <h3 class="text-2xl font-black text-gray-600 mb-2">T-{{ table.numero_table }}</h3>
+                <div class="table-offline rounded-[2.5rem] p-6 group transition-all">
+                    <h3 class="text-2xl font-black mb-2 table-offline-num">T-{{ table.numero_table }}</h3>
                     <p class="text-[10px] text-gray-500 font-bold uppercase mb-4 italic">{{ table.nombre_places }} Places</p>
-                    <span class="text-[10px] font-black text-gray-700 bg-white/5 px-4 py-2 rounded-full uppercase">Hors ligne</span>
+                    <span class="text-[10px] font-black text-gray-700 px-4 py-2 rounded-full uppercase table-offline-badge">Hors ligne</span>
                 </div>
                 {% endif %}
             {% endfor %}
@@ -66,13 +75,53 @@
 </div>
 
 <style>
-    /* Pour un effet fluide au chargement */
-    .grid > div {
-        animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
+  /* ── DARK MODE (défaut) ── */
+  .table-title { color: #f3f4f6; }
+  .table-subtitle { color: #6b7280; }
+  .table-section-title { color: inherit; }
+  .table-card { background-color: rgba(17,24,39,0.4); }
+  .table-num { color: #f9fafb; }
+  .table-info-block { background-color: rgba(0,0,0,0.4); }
+  .table-info-val { color: #ffffff; }
+  .table-places { color: #9ca3af; }
+  .table-offline { background-color: rgba(17,24,39,0.2); border: 2px dashed rgba(255,255,255,0.05); }
+  .table-offline-num { color: #4b5563; }
+  .table-offline-badge { background-color: rgba(255,255,255,0.05); }
+  .table-offline-icon { background-color: #1f2937; }
+
+  /* ── LIGHT MODE ── */
+  body.light-mode .table-title { color: #111827 !important; }
+  body.light-mode .table-subtitle { color: #6b7280 !important; }
+  body.light-mode .table-card {
+    background-color: #ffffff !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important;
+  }
+  body.light-mode .table-num { color: #111827 !important; }
+  body.light-mode .table-info-block {
+    background-color: #f3f4f6 !important;
+    border-color: #e5e7eb !important;
+  }
+  body.light-mode .table-info-val { color: #111827 !important; }
+  body.light-mode .table-places { color: #6b7280 !important; }
+  body.light-mode .table-offline {
+    background-color: #f9fafb !important;
+    border-color: #d1d5db !important;
+  }
+  body.light-mode .table-offline-num { color: #9ca3af !important; }
+  body.light-mode .table-offline-badge {
+    background-color: #e5e7eb !important;
+    color: #6b7280 !important;
+  }
+  body.light-mode .table-offline-icon { background-color: #e5e7eb !important; }
+  body.light-mode code { color: #2563eb !important; background-color: #eff6ff !important; }
+
+  /* Animation entrée */
+  .grid > div {
+    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 </style>
 {% endblock %}

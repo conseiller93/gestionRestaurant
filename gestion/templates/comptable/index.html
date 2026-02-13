@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="min-h-screen bg-[#070b14] text-gray-100 pb-20 font-sans">
+<div class="min-h-screen bg-[#070b14] text-gray-100 pb-20 font-sans transition-colors duration-300">
   <div class="flex flex-col lg:flex-row min-h-screen">
 
-    <aside class="lg:w-80 w-full bg-gray-950/40 backdrop-blur-2xl border-b lg:border-b-0 lg:border-r border-white/5 p-8 flex flex-col sticky top-0 h-screen z-40">
+    <aside class="lg:w-80 w-full bg-gray-950/40 backdrop-blur-2xl border-b lg:border-b-0 lg:border-r border-white/5 p-8 flex flex-col sticky top-0 h-screen z-40 transition-colors duration-300">
       <div class="mb-12">
         <div class="flex items-center gap-3 mb-2">
           <div class="w-10 h-10 bg-green-500 rounded-xl shadow-lg shadow-green-500/20 flex items-center justify-center font-black text-black">E</div>
-          <h2 class="text-2xl font-black tracking-tighter bg-gradient-to-r from-white to-gray-500 bg-clip-text text-transparent">ELEGANCE CAISSE</h2>
+          <h2 class="text-2xl font-black tracking-tighter bg-gradient-to-r from-white to-gray-500 bg-clip-text text-transparent dark:from-white dark:to-gray-500 light:from-gray-900 light:to-gray-600">ELEGANCE CAISSE</h2>
         </div>
         <p class="text-[10px] text-gray-500 font-black uppercase tracking-[0.4em] ml-1">Espace Comptable Pro</p>
       </div>
@@ -160,15 +160,15 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
           <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-[2rem] p-6 text-center">
             <p class="text-[10px] font-black uppercase tracking-widest text-emerald-500 mb-2">Recettes du jour</p>
-            <p class="text-3xl font-black text-white">{{ recette_du_jour|floatformat:0 }} <span class="text-sm text-emerald-500">FG</span></p>
+            <p class="text-3xl font-black text-white italic">{{ recette_du_jour|floatformat:0 }} <span class="text-sm text-emerald-500">FG</span></p>
           </div>
           <div class="bg-blue-500/10 border border-blue-500/20 rounded-[2rem] p-6 text-center">
             <p class="text-[10px] font-black uppercase tracking-widest text-blue-400 mb-2">Transactions aujourd'hui</p>
-            <p class="text-3xl font-black text-white">{{ nb_paiements_today }}</p>
+            <p class="text-3xl font-black text-white italic">{{ nb_paiements_today }}</p>
           </div>
           <div class="bg-red-500/10 border border-red-500/20 rounded-[2rem] p-6 text-center">
             <p class="text-[10px] font-black uppercase tracking-widest text-red-400 mb-2">Total dépenses</p>
-            <p class="text-3xl font-black text-white">{{ total_depenses|floatformat:0 }} <span class="text-sm text-red-400">FG</span></p>
+            <p class="text-3xl font-black text-white italic">{{ total_depenses|floatformat:0 }} <span class="text-sm text-red-400">FG</span></p>
           </div>
         </div>
 
@@ -282,10 +282,10 @@
                 {% endif %}
               </tr>
 
-              {# Ligne détail dépliée : afficher tous les plats au survol (tooltip) #}
+              {# Ligne détail dépliée #}
               {% if p.commande.items.count > 3 %}
               <tr class="bg-black/20 border-none">
-                <td colspan="7" class="px-8 pb-4">
+                <td colspan="8" class="px-8 pb-4">
                   <div class="flex flex-wrap gap-1 pl-4 border-l-2 border-yellow-500/20">
                     <span class="text-[9px] text-gray-600 font-black uppercase mr-2 self-center">Tous les plats :</span>
                     {% for item in p.commande.items.all %}
@@ -300,7 +300,7 @@
 
               {% empty %}
               <tr>
-                <td colspan="7" class="px-8 py-20 text-center text-gray-600 italic">
+                <td colspan="8" class="px-8 py-20 text-center text-gray-600 italic">
                   Aucun paiement enregistré.
                 </td>
               </tr>
@@ -338,11 +338,11 @@
             </div>
             <div class="bg-emerald-500/10 border border-emerald-500/20 p-6 rounded-[2rem] text-center">
               <p class="text-emerald-500 font-black uppercase text-[10px] mb-2 tracking-widest">Recettes du jour</p>
-              <p class="text-3xl font-black text-white">{{ recette_du_jour|floatformat:0 }} <span class="text-sm text-emerald-500">FG</span></p>
+              <p class="text-3xl font-black text-white italic">{{ recette_du_jour|floatformat:0 }} <span class="text-sm text-emerald-500">FG</span></p>
             </div>
             <div class="bg-red-500/10 border border-red-500/20 p-6 rounded-[2rem] text-center">
               <p class="text-red-400 font-black uppercase text-[10px] mb-2 tracking-widest">Total depenses</p>
-              <p class="text-3xl font-black text-white">{{ total_depenses|floatformat:0 }} <span class="text-sm text-red-400">FG</span></p>
+              <p class="text-3xl font-black text-white italic">{{ total_depenses|floatformat:0 }} <span class="text-sm text-red-400">FG</span></p>
             </div>
           </div>
         </div>
@@ -356,7 +356,6 @@
           </div>
           <div class="flex flex-wrap gap-4">
 
-            {# Reinitialiser le solde #}
             <form method="POST" action="{% url 'reinitialiser_solde' %}"
                   onsubmit="return confirm('Reinitialiser le solde a 0 FG ? Cette action est irreversible.')">
               {% csrf_token %}
@@ -366,7 +365,6 @@
               </button>
             </form>
 
-            {# Vider tous les paiements #}
             <form method="POST" action="{% url 'admin_tout_supprimer' %}"
                   onsubmit="return confirm('ATTENTION : Supprimer TOUS les paiements de l historique ? Le solde sera ajuste.')">
               {% csrf_token %}
@@ -429,7 +427,7 @@
           {% for d in depenses %}
           <div class="group bg-gray-900/20 border border-white/5 rounded-[2.5rem] p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 transition-all hover:bg-gray-900/50 shadow-lg">
 
-            {# Partie gauche : icone + infos #}
+            {# Partie gauche #}
             <div class="flex items-center gap-6 flex-1 min-w-0">
               <div class="w-16 h-16 sm:w-20 sm:h-20 bg-black/60 rounded-3xl flex items-center justify-center text-3xl flex-shrink-0">
                 {% if d.categorie == "Achats" %}🛒
@@ -450,8 +448,6 @@
                     </div>
                     <span class="text-[10px] font-black text-purple-400 uppercase tracking-wider">@{{ d.utilisateur.identifiant }}</span>
                   </span>
-                  {% else %}
-                  <span class="text-[10px] text-gray-700 italic px-3 py-1.5 bg-white/5 rounded-full border border-white/5">Auteur inconnu</span>
                   {% endif %}
                   <span class="text-[10px] text-gray-600 font-bold bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
                     🕐 {{ d.date|date:"d/m/Y a H:i" }}
@@ -460,7 +456,7 @@
               </div>
             </div>
 
-            {# Partie droite : montant + supprimer (admin only) #}
+            {# Partie droite #}
             <div class="flex items-center justify-between sm:justify-end gap-8 flex-shrink-0">
               <div class="text-right">
                 <p class="text-[10px] text-gray-600 font-black uppercase tracking-widest mb-1">Sortie</p>
@@ -470,7 +466,6 @@
                 </span>
               </div>
 
-              {# Bouton supprimer — admin uniquement #}
               {% if request.user.role == 'admin' or request.user.is_superuser %}
               <form method="POST" action="{% url 'supprimer_depense' d.id %}"
                     onsubmit="return confirm('Supprimer cette depense et reintegrer {{ d.montant }} FG au solde ?')">
@@ -482,11 +477,8 @@
                   </svg>
                 </button>
               </form>
-              {% else %}
-              <div class="w-12 h-12"></div>
               {% endif %}
             </div>
-
           </div>
           {% empty %}
           <div class="py-20 text-center bg-gray-900/10 rounded-[3rem] border border-dashed border-white/5">
@@ -494,56 +486,77 @@
           </div>
           {% endfor %}
         </div>
-
-        {# Bouton tout supprimer — admin uniquement #}
-        {% if request.user.role == 'admin' or request.user.is_superuser %}
-        {% if depenses %}
-        <div class="mt-8 flex justify-end">
-          <form method="POST" action="{% url 'admin_tout_supprimer' %}"
-                onsubmit="return confirm('ATTENTION : Supprimer TOUTES les depenses ? Les montants seront reintegres au solde.')">
-            {% csrf_token %}
-            <input type="hidden" name="type" value="depenses">
-            <button type="submit"
-                    class="flex items-center gap-2 bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white px-6 py-3 rounded-2xl border border-red-500/20 font-black text-xs uppercase tracking-widest transition-all">
-              🗑 Vider toutes les depenses
-            </button>
-          </form>
-        </div>
-        {% endif %}
-        {% endif %}
       </section>
 
     </main>
   </div>
 </div>
 
-
 <style>
   @keyframes fade-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes scale-up { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
   .animate-fade-in { animation: fade-in 0.6s ease-out forwards; }
-  .animate-scale-up { animation: scale-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+  /* ══════════════════════════════════════════════════════════
+     PATCH LIGHT MODE
+     Appliqué quand la classe 'light-mode' est sur <body>
+     ══════════════════════════════════════════════════════════ */
+
+  body.light-mode .min-h-screen.bg-\[\#070b14\] { background-color: #f3f4f6 !important; color: #1f2937 !important; }
+  
+  body.light-mode aside { 
+    background-color: #ffffff !important; 
+    border-right-color: #e5e7eb !important; 
+  }
+  
+  body.light-mode .bg-gray-900\/30, 
+  body.light-mode .bg-gray-900\/20, 
+  body.light-mode .bg-gray-950\/40 { background-color: #ffffff !important; border-color: #e5e7eb !important; }
+  
+  body.light-mode .text-white { color: #111827 !important; }
+  body.light-mode .text-gray-100 { color: #1f2937 !important; }
+  body.light-mode .text-gray-300 { color: #374151 !important; }
+  body.light-mode .text-gray-400 { color: #4b5563 !important; }
+  
+  body.light-mode .bg-black\/20, 
+  body.light-mode .bg-black\/40,
+  body.light-mode .bg-black\/60 { background-color: #f3f4f6 !important; }
+  
+  body.light-mode .nav-btn.bg-gray-900\/50 { background-color: #e5e7eb !important; color: #4b5563 !important; }
+  body.light-mode .nav-btn.bg-gray-900\/50:hover { background-color: #d1d5db !important; color: #111827 !important; }
+
+  body.light-mode input, 
+  body.light-mode select { background-color: #ffffff !important; color: #111827 !important; border: 1px solid #d1d5db !important; }
+  
+  body.light-mode .border-white\/5 { border-color: #e5e7eb !important; }
+  body.light-mode tr:hover { background-color: #f9fafb !important; }
+  body.light-mode thead tr { background-color: #f3f4f6 !important; }
 </style>
 
 <script>
-function showSection(id, btn) {
-  document.querySelectorAll('.section-content').forEach(s => s.classList.add('hidden'));
-  document.getElementById(id).classList.remove('hidden');
-  document.querySelectorAll('.nav-btn').forEach(b => {
-    b.className = "nav-btn w-full flex items-center gap-4 px-6 py-5 rounded-[2rem] bg-gray-900/50 text-gray-400 font-semibold transition-all hover:bg-gray-800 hover:text-white";
-  });
-  if (btn) {
-    btn.className = "nav-btn w-full flex items-center justify-between px-6 py-5 rounded-[2rem] bg-green-600 text-white font-bold transition-all shadow-2xl shadow-green-900/40";
+  function showSection(sectionId, btn) {
+    document.querySelectorAll('.section-content').forEach(s => s.classList.add('hidden'));
+    document.getElementById(sectionId).classList.remove('hidden');
+    
+    document.querySelectorAll('.nav-btn').forEach(b => {
+      b.classList.remove('bg-blue-600', 'text-white', 'shadow-2xl', 'shadow-blue-900/40');
+      b.classList.add('bg-gray-900/50', 'text-gray-400');
+    });
+    
+    btn.classList.remove('bg-gray-900/50', 'text-gray-400');
+    btn.classList.add('bg-blue-600', 'text-white', 'shadow-2xl', 'shadow-blue-900/40');
   }
-}
 
-document.addEventListener('DOMContentLoaded', function() {
-  const hash = window.location.hash.replace('#', '');
-  if (hash && document.getElementById(hash)) {
-    showSection(hash, document.getElementById('btn-' + hash));
-  } else {
-    showSection('mises_a_jour', document.getElementById('btn-mises_a_jour'));
+  // Détection du mode au chargement
+  function applyTheme() {
+    if (localStorage.theme === 'light' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+        document.body.classList.add('light-mode');
+    } else {
+        document.body.classList.remove('light-mode');
+    }
   }
-});
+  
+  applyTheme();
+  // Écouter les changements manuels de mode si vous avez un switch dans base.html
+  window.addEventListener('storage', applyTheme);
 </script>
 {% endblock %}
